@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#C2531A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Джери">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>План Джери</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+html,body{margin:0;padding:0}
+[hidden]{display:none!important}
+.app{padding-top:calc(18px + env(safe-area-inset-top,0px))}
+
+/* Layout: one phone-width column read top to bottom; each day is a timeline of feedings, the year is a timeline of visits; tab bar fixed at the bottom */
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F5F7F9; --ink:#1B2026; --muted:#5A6470; --line:#D9DFE5;
+  --ginger:#C2531A; --ginger-ink:#FFFFFF; --ginger-soft:#FBE6D8;
+  --ok:#22744A; --ok-soft:#DCF0E4; --warn:#8E6100; --warn-soft:#FAEFD0; --alert:#B02E28; --alert-soft:#FAE0DE;
+  --f-display:"Unbounded","Onest",system-ui,sans-serif;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:16px; --r-s:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111418; --surface:#1A1E23; --surface-2:#21262C; --ink:#E8ECF0; --muted:#9BA5AF; --line:#2C3239;
+  --ginger:#F08A4B; --ginger-ink:#1C0F06; --ginger-soft:#3A2416;
+  --ok:#5BC489; --ok-soft:#163024; --warn:#E4B44B; --warn-soft:#33290F; --alert:#F2736A; --alert-soft:#3A1B19;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#111418; --surface:#1A1E23; --surface-2:#21262C; --ink:#E8ECF0; --muted:#9BA5AF; --line:#2C3239;
+  --ginger:#F08A4B; --ginger-ink:#1C0F06; --ginger-soft:#3A2416;
+  --ok:#5BC489; --ok-soft:#163024; --warn:#E4B44B; --warn-soft:#33290F; --alert:#F2736A; --alert-soft:#3A1B19;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+.app{max-width:580px;margin:0 auto;padding-inline:16px;padding-block:18px calc(96px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:.01em}
+h3{font-size:15.5px;font-weight:600}
+p{margin:0}
+a{color:var(--ginger)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:12px}
+.section{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.card{background:var(--surface);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.list{background:var(--surface);border-radius:var(--r);overflow:hidden}
+.list > * + *{border-top:1px solid var(--line)}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.alert{background:var(--alert-soft);color:var(--alert)}
+.pill.now{background:var(--ginger);color:var(--ginger-ink)}
+.pill.soft{background:var(--surface-2);color:var(--muted)}
+.banner{border-radius:var(--r-s);padding:10px 12px;font-size:13.5px;background:var(--warn-soft);color:var(--ink)}
+.note{border-radius:var(--r-s);padding:10px 12px;font-size:13.5px;background:var(--surface-2)}
+ul.plain,ol.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.hero-mark{width:64px;height:64px;border-radius:50%;background:var(--ginger-soft);display:grid;place-items:center;flex:none}
+.hero h1{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:-.01em;line-height:1.05}
+.hero .meta{display:flex;flex-direction:column;gap:2px;margin-top:4px;min-width:0}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.stat{background:var(--surface-2);border-radius:var(--r-s);padding:9px 10px;min-width:0}
+.stat b{display:block;font-family:var(--f-display);font-weight:500;font-size:15px;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* ration */
+.ration{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.ration .part{background:var(--ginger-soft);border-radius:var(--r-s);padding:12px;min-width:0}
+.ration .big{font-family:var(--f-display);font-weight:700;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
+.ration .plus{font-family:var(--f-display);font-size:20px;color:var(--muted)}
+.ration .lbl{font-size:12.5px;color:var(--muted);margin-top:4px}
+
+/* timeline rows */
+.row{display:grid;grid-template-columns:62px 1fr 44px;gap:12px;align-items:center;padding:13px 14px;min-width:0}
+.row .t{font-family:var(--f-display);font-weight:500;font-size:15px;font-variant-numeric:tabular-nums}
+.row .what{min-width:0}
+.row .what b{font-family:var(--f-display);font-weight:500;font-size:17px;font-variant-numeric:tabular-nums}
+.row .sub{font-size:13px;color:var(--muted)}
+.row.is-now{background:var(--ginger-soft)}
+.row.is-done .what b,.row.is-done .t{color:var(--muted)}
+.row.wide{grid-template-columns:1fr 44px}
+.check{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:transparent;font-size:18px;font-weight:700;justify-self:end}
+.check:hover{border-color:var(--ginger)}
+.check.on{background:var(--ginger);border-color:var(--ginger);color:var(--ginger-ink)}
+.check:focus-visible,.btn:focus-visible,.tab:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--ginger);outline-offset:2px}
+.who{font-size:12.5px;color:var(--ok);font-weight:500}
+
+/* buttons, forms */
+.btn{appearance:none;border:0;border-radius:999px;padding:9px 16px;font:600 14px var(--f-body);cursor:pointer;background:var(--ginger);color:var(--ginger-ink);display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn.link{background:none;color:var(--muted);padding:4px 6px;font-weight:500;text-decoration:underline}
+.btn.sm{padding:6px 12px;font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+form.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 120px}
+.field label{font-size:12.5px;color:var(--muted);font-weight:500}
+input[type=number],input[type=text],input[type=date]{font:500 15px var(--f-body);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-s);padding:9px 10px;width:100%;min-width:0}
+.toggle{display:flex;align-items:center;gap:10px;cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--ginger)}
+
+details{border-radius:var(--r-s)}
+details > summary{cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+details > summary::-webkit-details-marker{display:none}
+details > summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s;flex:none;margin-right:2px}
+details[open] > summary::before{transform:rotate(45deg)}
+details > .inner{padding-top:8px;display:flex;flex-direction:column;gap:6px}
+
+/* plan timeline */
+.month{font-family:var(--f-display);font-weight:500;font-size:14px;color:var(--muted);margin:18px 2px 2px}
+.ev{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:14px;background:var(--surface);border-radius:var(--r)}
+.ev + .ev{margin-top:8px}
+.stack > .ev + .ev{margin-top:0}
+.ev-date{font-family:var(--f-display);font-weight:500;font-size:13.5px;line-height:1.25;font-variant-numeric:tabular-nums}
+.ev-body{display:flex;flex-direction:column;gap:7px;min-width:0}
+.ev.done{opacity:.72}
+.ev.done h3{text-decoration:line-through;text-decoration-color:var(--muted)}
+.ev.now{box-shadow:inset 0 0 0 2px var(--ginger)}
+.ev.late{box-shadow:inset 0 0 0 2px var(--warn)}
+.kv{font-size:13.5px}
+.kv b{font-weight:600}
+
+/* care */
+.task{display:flex;flex-direction:column;gap:8px;padding:14px}
+.task-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+
+/* places */
+.place{display:flex;flex-direction:column;gap:6px;padding:14px}
+.place-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.phone{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.phone code{font:600 15px var(--f-body);font-variant-numeric:tabular-nums;user-select:all}
+
+/* money */
+.money-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:11px 14px;align-items:baseline}
+.money-row .sum{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.money-total{font-family:var(--f-display);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums}
+
+/* chart */
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--f-body)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .band{fill:var(--ginger-soft)}
+.chart .mid{stroke:var(--ginger);stroke-width:1.2;stroke-dasharray:4 4;fill:none;opacity:.7}
+.chart .line{stroke:var(--ink);stroke-width:2;fill:none}
+.chart .pt{fill:var(--ginger);stroke:var(--surface);stroke-width:2}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+.tabs-in{max-width:580px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.tab{appearance:none;background:none;border:0;border-radius:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;font:600 11.5px var(--f-body);color:var(--muted);cursor:pointer;min-width:0}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--ginger);background:var(--ginger-soft)}
+
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:999px;font-size:13.5px;font-weight:500;z-index:9;max-width:calc(100% - 32px)}
+@media (max-width:380px){ .hero-stats{grid-template-columns:1fr 1fr} .ration{grid-template-columns:1fr} .ration .plus{display:none} .ev{grid-template-columns:1fr;gap:6px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="banner"></div>
+
+  <!-- СЕГОДНЯ -->
+  <section data-tab="today">
+    <div class="card" id="hero"></div>
+
+    <div class="section">
+      <div class="section-head"><h2 id="today-title">Еда на сегодня</h2><span class="small muted" id="today-date"></span></div>
+      <div class="card" id="ration"></div>
+      <div class="list" id="meals"></div>
+      <div class="card">
+        <h3>Если весов нет</h3>
+        <div class="list" style="background:var(--surface-2)">
+          <div class="money-row"><div class="small"><b>Сухой корм</b>, 1 столовая ложка без горки</div><div class="sum small">≈ 7 г</div></div>
+          <div class="money-row"><div class="small"><b>Сухой корм</b>, 1 чайная ложка без горки</div><div class="sum small">≈ 2–3 г</div></div>
+          <div class="money-row"><div class="small"><b>Влажный корм</b>, 1 столовая ложка</div><div class="sum small">≈ 15 г</div></div>
+          <div class="money-row"><div class="small"><b>Влажный корм</b>, половина пакетика</div><div class="sum small">≈ 42 г = 3 столовые ложки</div></div>
+        </div>
+        <p class="small">Ложки — обычные: столовая, которой едят суп, и чайная. Насыпать без горки — лишнее смахнуть пальцем.</p>
+        <p class="small muted">Ложками получается примерно: гранулы бывают разного размера. Весы точнее — купите при первой возможности.</p>
+      </div>
+      <details class="card">
+        <summary>Как давать еду</summary>
+        <div class="inner small">
+          <ul class="plain">
+            <li><b>Сухой корм</b> — лучше взвешивать на кухонных весах. Нет весов — отмеряйте ложками, как написано в карточке «Если весов нет».</li>
+            <li><b>Влажный корм</b> — 1 пакетик (85 г) делим на 2 кормления: утром 42 г, вечером 43 г. Проще всего выдавить в миску примерно половину пакетика.</li>
+            <li>Оставшуюся половину пакетика закрыть зажимом или переложить в баночку с крышкой и убрать в холодильник, не дольше суток. Достать за 20–30 минут до кормления, чтобы корм был комнатной температуры.</li>
+            <li>Несъеденный влажный корм убрать через 30 минут.</li>
+            <li>Если днём никого нет дома — дневные порции сухого можно насыпать утром в одну миску.</li>
+            <li>Съел всё и просит ещё — можно добавить 5 г сухого (это 2 чайные ложки без горки), один раз за день.</li>
+            <li>Вода — всегда. Молоко, еду со стола и лакомства пока не давать.</li>
+            <li>Порции пересчитываются сами, когда вы записываете новый вес.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
+    <div class="section">
+      <h2>Каждый день</h2>
+      <div class="list" id="daily"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Последние действия</h2><button class="btn link sm" data-act="tab" data-id="history">вся история</button></div>
+      <div class="list" id="recent"></div>
+    </div>
+
+    <div class="section" id="due-wrap">
+      <h2>По графику</h2>
+      <div class="stack" id="due"></div>
+    </div>
+
+    <div class="section">
+      <h2>Советы</h2>
+      <div class="stack" id="tips"></div>
+    </div>
+
+    <div class="section">
+      <h2>Вес</h2>
+      <div class="card">
+        <div id="weight-info"></div>
+        <form class="inline" id="weight-form" autocomplete="off">
+          <div class="field"><label for="w-g">Вес, граммы</label><input id="w-g" type="number" inputmode="numeric" min="200" max="9000" step="1" placeholder="например, 850" required></div>
+          <div class="field"><label for="w-d">Дата</label><input id="w-d" type="date" required></div>
+          <button class="btn" type="submit">Записать вес</button>
+        </form>
+        <p class="small muted">Как взвесить: встаньте на напольные весы с Джери на руках, потом без него — разница и есть его вес. Или посадите в миску на кухонных весах. Утром, до еды.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Ближайшее у врача</h2>
+      <div id="next-vet"></div>
+    </div>
+  </section>
+
+  <!-- ПЛАН -->
+  <section data-tab="plan" hidden>
+    <div class="card">
+      <h2>План</h2>
+      <p class="small muted">Всё по порядку на ближайший год. Дальше приложение само добавляет прививки, глистогонки и осмотры — на всю жизнь Джери. Сделали — отметьте, увидят все.</p>
+    </div>
+    <div id="plan"></div>
+    <details class="card" style="margin-top:12px" data-k="past">
+      <summary>Что уже было</summary>
+      <div class="inner" id="plan-past"></div>
+    </details>
+
+    <div class="section">
+      <h2>Срочно к врачу, если</h2>
+      <div class="card" style="background:var(--alert-soft)">
+        <ul class="plain">
+          <li>не ест больше 12 часов;</li>
+          <li>рвота больше двух раз за день или с кровью;</li>
+          <li>понос дольше суток;</li>
+          <li>вялый, не играет, прячется;</li>
+          <li>сидит в лотке и тужится, а результата нет;</li>
+          <li>дышит открытым ртом или тяжело;</li>
+          <li>упал с высоты, даже если выглядит нормально;</li>
+          <li>проглотил нитку, дождик, резинку, лекарство или погрыз лилию;</li>
+          <li>хромает или хвост вдруг стал жёстким.</li>
+        </ul>
+        <p class="small"><b>Куда:</b> Ветклиника на Смольной, круглосуточно — телефон ниже.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Куда идти</h2>
+      <div class="list" id="places"></div>
+    </div>
+  </section>
+
+  <!-- УХОД -->
+  <section data-tab="care" hidden>
+    <div class="card">
+      <h2>Уход</h2>
+      <p class="small muted">Нажимайте «Сделано» — приложение само посчитает, когда в следующий раз, и покажет это на «Сегодня».</p>
+    </div>
+    <div id="care"></div>
+
+    <div class="section">
+      <h2>Особенность вислоухих</h2>
+      <div class="card small">
+        <p>У скоттиш-фолдов загнутые уши связаны с особенностью хрящей, поэтому у породы бывают проблемы с суставами (остеохондродисплазия) и иногда с сердцем. Что делать:</p>
+        <ul class="plain">
+          <li>раз в месяц проверять хвост и лапы (задача выше);</li>
+          <li>не перекармливать — лишний вес нагружает суставы;</li>
+          <li>уши осматривать каждую неделю: в загнутом ухе сера копится быстрее;</li>
+          <li>перед кастрацией сделать УЗИ сердца (это есть в плане).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>Первая неделя дома</h2><span class="small muted" id="start-count"></span></div>
+      <div id="start"></div>
+    </div>
+  </section>
+
+  <!-- ДЕНЬГИ -->
+  <section data-tab="money" hidden>
+    <div id="money"></div>
+    <div class="section">
+      <h2>Наши траты</h2>
+      <div class="card">
+        <form class="inline" id="exp-form" autocomplete="off">
+          <div class="field"><label for="e-sum">Сумма, ₽</label><input id="e-sum" type="number" inputmode="numeric" min="1" step="1" placeholder="2444" required></div>
+          <div class="field" style="flex-basis:180px"><label for="e-what">На что</label><input id="e-what" type="text" maxlength="80" placeholder="Корм в пакетиках, 26 шт" required></div>
+          <div class="field"><label for="e-d">Дата</label><input id="e-d" type="date" required></div>
+          <button class="btn" type="submit">Добавить</button>
+        </form>
+        <div id="exp-sum"></div>
+      </div>
+      <div class="list" id="exp-list"></div>
+    </div>
+  </section>
+
+  <!-- ИСТОРИЯ -->
+  <section data-tab="history" hidden>
+    <div class="card">
+      <h2>История</h2>
+      <p class="small muted">Кто что отмечал, снимал, исправлял и удалял — последние 300 действий.</p>
+    </div>
+    <div id="history" style="margin-top:8px"></div>
+  </section>
+
+  <!-- ДЖЕРИ -->
+  <section data-tab="jerry" hidden>
+    <div class="card" id="passport"></div>
+    <div class="section">
+      <h2>Как растёт</h2>
+      <div class="card" id="growth"></div>
+      <div class="list" id="w-list"></div>
+    </div>
+    <div class="section">
+      <div class="card">
+        <label class="toggle"><input type="checkbox" id="neutered"> <span><b>Джери кастрирован</b><br><span class="small muted">Отметьте после операции — порции пересчитаются сами.</span></span></label>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Вся жизнь Джери</h2>
+      <div class="list" id="stages"></div>
+    </div>
+    <div class="section">
+      <details class="card">
+        <summary>Как считаются порции</summary>
+        <div class="inner small">
+          <p><b>До 1 года.</b> Сколько энергии нужно котёнку на 1 кг веса, зависит от возраста: в 10 недель около 250 ккал, в 20 недель 130, в 30 недель 100, в 40 недель 80, к году 65 (нормы NRC для растущих котят). Умножаем на вес. Сухого не больше, чем Purina советует для смешанного кормления в этом возрасте.</p>
+          <p><b>С 1 года.</b> Берём таблицу Purina для стерилизованных кошек по весу (3 кг — 154 ккал, 5 кг — 250 ккал в день). Некастрированному коту +20%. С 12 лет +20%, как советует Purina для пожилых.</p>
+          <p><b>Фигура.</b> Раз в месяц вы отмечаете, худой он, как надо или полный. Худому порция +10%, полному −15% (котёнку −10%).</p>
+          <p><b>Пакетик.</b> Каждый день 1 пакетик влажного корма. Его калории вычитаем, остальное добираем сухим кормом. Калорийность берём с сайта Purina для каждого корма.</p>
+          <p><b>Кормления.</b> До 3 месяцев — 5 раз в день, потом — 4 раза, на всю жизнь.</p>
+          <p id="calc-now" class="note"></p>
+        </div>
+      </details>
+      <details class="card">
+        <summary>Источники</summary>
+        <div class="inner small">
+          <a href="https://www.purina.co.uk/cat/cat-food/product-proplan-original-dry-kitten-healthy-start-chicken" target="_blank" rel="noopener">Purina: сухой Pro Plan Healthy Start — таблица кормления и калорийность</a>
+          <a href="https://www.purina.co.uk/cat/cat-food/product-proplan-healthy-start-wet-kitten-turkey-in-gravy" target="_blank" rel="noopener">Purina: влажный корм для котят с индейкой — калорийность</a>
+          <a href="https://shop.purina.ru/korm-dlya-koshek/suhoj/suhoj-korm-pro-plan-healthy-start-dlya-kotyat-a-takzhe-beremennyh-i-kormyashchih-koshek-s-kuricej-3-kg" target="_blank" rel="noopener">shop.purina.ru: сухой корм 3 кг — цена</a>
+          <a href="https://shop.purina.ru/korm-dlya-koshek/vlazhnyj/vlazhnyy-korm-pro-planr-nutri-savourr-dlya-kotyat-s-indeykoy-v-souse-pauch-85-g" target="_blank" rel="noopener">shop.purina.ru: влажный корм, 26 пакетиков — цена и нормы</a>
+          <a href="https://vetsmol.ru/price" target="_blank" rel="noopener">Ветклиника на Смольной — прайс</a>
+          <a href="https://mos-obvet.ru/clinics/sbbzh-severnogo-okruga/" target="_blank" rel="noopener">Госклиника СББЖ САО — бесплатная прививка от бешенства</a>
+          <a href="https://www.vidal.ru/veterinar/multifel-4-29964" target="_blank" rel="noopener">Видаль: «Мультифел-4», схема прививок</a>
+          <a href="https://pharmvestnik.ru/content/news/rosselhoznadzor-i-proizvoditel-ne-poluchali-obrashenii-o-gibeli-koshek-iz-za-vakciny-multifel.html" target="_blank" rel="noopener">Фармвестник, 04.09.2026: заявление о «Мультифеле»</a>
+          <a href="https://4lapy.ru/product/elanco-milbemaks-tabletki-dlya-kotyat-ot-gelmintov-2-tabletki-10119-1004052/" target="_blank" rel="noopener">«Четыре Лапы»: Мильбемакс для котят — дозировка и цена</a>
+        </div>
+      </details>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Разделы">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" data-act="tab" data-id="today"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M4 12a8 6 0 0 0 16 0"/><path d="M9 7c0-1.5 1-2 1-3.5M13.5 7c0-1.5 1-2 1-3.5"/></svg>Сегодня</button>
+    <button class="tab" role="tab" data-act="tab" data-id="plan"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>План</button>
+    <button class="tab" role="tab" data-act="tab" data-id="care"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="15.5" rx="4.2" ry="3.6"/><circle cx="6.3" cy="10" r="1.8"/><circle cx="9.6" cy="6.6" r="1.8"/><circle cx="14.4" cy="6.6" r="1.8"/><circle cx="17.7" cy="10" r="1.8"/></svg>Уход</button>
+    <button class="tab" role="tab" data-act="tab" data-id="money"><svg viewBox="0 0 24 24"><path d="M8 20V4h6a4 4 0 0 1 0 8H6M6 16h8"/></svg>Деньги</button>
+    <button class="tab" role="tab" data-act="tab" data-id="jerry"><svg viewBox="0 0 24 24"><path d="M5 9 5.5 4l4 3h5l4-3 .5 5"/><path d="M5 9c-1 2-1 4 0 6 1.5 3 4 4.5 7 4.5s5.5-1.5 7-4.5c1-2 1-4 0-6"/><circle cx="9" cy="12.5" r=".6"/><circle cx="15" cy="12.5" r=".6"/></svg>Джери</button>
+  </div>
+</nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- Постоянные данные ---------- */
+const DOB = "2026-07-30";
+const BASE_W = {d:"2026-10-10", g:750};
+const POUCH_G = 85;
+const Y1 = "2027-07-30", Y7 = "2033-07-30", Y11 = "2037-07-30", Y12 = "2038-07-30";
+const PRICE = {pouch:94, dry3kg:3726, litter:800, misc:400};
+const FOODS = {
+  kitten:{dry:"Pro Plan Healthy Start для котят, с курицей", dryShort:"для котят", dryK:4.255, wet:"Pro Plan для котят с индейкой, пакетики 85 г", wetK:82},
+  adult: {dry:"Pro Plan Sterilised для стерилизованных кошек, с индейкой", dryShort:"Sterilised", dryK:3.85, wet:"Pro Plan Sterilised, пакетики 85 г", wetK:80},
+  mature:{dry:"Pro Plan Sterilised 7+, с индейкой", dryShort:"Sterilised 7+", dryK:3.84, wet:"Pro Plan Sterilised 7+, пакетики 85 г", wetK:64}
+};
+
+const MG = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MS = ["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"];
+const MN = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const WD = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
+
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const P = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const x = P(s); x.setDate(x.getDate()+n); return ymd(x); };
+const diff = (a,b) => Math.round((P(b)-P(a))/864e5);
+const fD = s => { const d=P(s); return d.getDate()+" "+MG[d.getMonth()]; };
+const fDY = s => { const d=P(s); return d.getDate()+" "+MG[d.getMonth()]+" "+d.getFullYear(); };
+const fS = s => { const d=P(s); return d.getDate()+" "+MS[d.getMonth()]; };
+function fRangeS(a,b){ if(!b||a===b) return fS(a); const A=P(a),B=P(b); if(A.getMonth()===B.getMonth()) return A.getDate()+"–"+B.getDate()+" "+MS[B.getMonth()]; return fS(a)+" – "+fS(b); }
+const plural = (n,f) => { const a=Math.abs(n)%100, b=a%10; return a>10&&a<20?f[2]:b>1&&b<5?f[1]:b===1?f[0]:f[2]; };
+const rub = n => Math.round(n).toLocaleString("ru-RU")+" ₽";
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hhmm = iso => { try{ const d=new Date(iso); return pad(d.getHours())+":"+pad(d.getMinutes()); }catch(e){ return ""; } };
+const today = () => ymd(new Date());
+const yearsOld = d => { const a=P(DOB), b=P(d); let y=b.getFullYear()-a.getFullYear(); if(b.getMonth()<a.getMonth()||(b.getMonth()===a.getMonth()&&b.getDate()<a.getDate())) y--; return y; };
+
+/* ---------- Питание ---------- */
+function interp(pts,x){ if(x<=pts[0][0]) return pts[0][1]; for(let i=1;i<pts.length;i++){ const [x1,y1]=pts[i-1],[x2,y2]=pts[i]; if(x<=x2) return y1+(y2-y1)*(x-x1)/(x2-x1); } const n=pts.length; const [x1,y1]=pts[n-2],[x2,y2]=pts[n-1]; return y2+(y2-y1)*(x-x2)/(x2-x1); }
+const kcalPerKgKitten = w => interp([[0,250],[10,250],[20,130],[30,100],[40,80],[52,65],[60,65]], Math.min(w,60));
+const purinaCap = m => interp([[0,15],[1,15],[2,30],[3,40],[4,45],[6,50],[12,50],[13,50]], Math.min(m,13));
+const adultKcal = kg => interp([[1,60],[2,100],[3,154],[5,250],[7,347]], kg);
+
+function foodKey(d){ return d < Y1 ? "kitten" : d < Y7 ? "adult" : "mature"; }
+function transitionOn(d){
+  for(const [start,from,to] of [[Y1,"kitten","adult"],[Y7,"adult","mature"]]){
+    const i = diff(start,d);
+    if(i>=0 && i<10) return {day:i+1, from, to, pNew: i<3?0.25 : i<6?0.5 : i<9?0.75 : 1, wetNew: i>=5};
+  }
+  return null;
+}
+const BCS_F = {thin:1.1, ideal:1, full:0.85};
+function ration(d, grams, prof){
+  prof = prof || {};
+  const neut = !!prof.neutered, bcs = prof.bcs || "ideal";
+  const weeks = diff(DOB,d)/7, months = diff(DOB,d)/30.4375;
+  let kcal, cap = null;
+  if(d < Y1){ kcal = kcalPerKgKitten(weeks)*grams/1000; if(neut) kcal *= .85; cap = purinaCap(months); }
+  else { kcal = adultKcal(grams/1000); if(!neut) kcal *= 1.2; if(d >= Y12) kcal *= 1.2; }
+  let f = BCS_F[bcs] || 1; if(bcs==="full" && d < Y1) f = 0.9;
+  kcal *= f;
+  const tr = transitionOn(d);
+  const fk = foodKey(d);
+  const wetFood = tr ? FOODS[tr.wetNew ? tr.to : tr.from] : FOODS[fk];
+  const dryKcal = Math.max(0, kcal - wetFood.wetK);
+  let dry, oldG = 0, newG = 0, capped = false;
+  if(tr){
+    oldG = Math.round(dryKcal*(1-tr.pNew)/FOODS[tr.from].dryK);
+    newG = Math.round(dryKcal*tr.pNew/FOODS[tr.to].dryK);
+    dry = oldG + newG;
+  } else {
+    let g = dryKcal/FOODS[fk].dryK;
+    if(cap!=null && g > cap){ g = cap; capped = true; }
+    dry = Math.round(g);
+  }
+  return {kcal:Math.round(kcal), dry, oldG, newG, tr, fk, wetFood, wetK:wetFood.wetK, capped, cap: cap!=null?Math.round(cap):null,
+          kpk: d<Y1 ? Math.round(kcalPerKgKitten(weeks)) : null, neut, bcs};
+}
+const MEALS = {
+  A:[["0800","wet"],["1200","dry"],["1600","dry"],["2000","wet"],["2300","dry"]],
+  B:[["0800","wet"],["1300","dry"],["1900","wet"],["2230","dry"]]
+};
+const stageOf = d => d < "2026-10-30" ? "A" : "B";
+const TBSP_DRY = 7, TSP_DRY = 2.5;
+function spoonsDry(g){
+  if(g<=0) return "—";
+  let t = Math.floor(g/TBSP_DRY), c = Math.round((g - t*TBSP_DRY)/TSP_DRY);
+  if(c>=3){ t+=1; c=0; }
+  const parts = [];
+  if(t) parts.push(t+" "+plural(t,["столовая ложка","столовые ложки","столовых ложек"]));
+  if(c) parts.push(c+" "+plural(c,["чайная ложка","чайные ложки","чайных ложек"]));
+  return parts.length ? parts.join(" и ")+" без горки" : "1 чайная ложка без горки";
+}
+function splitEven(total, n){ const base=Math.floor(total/n); let rem=total-base*n; const out=[]; for(let i=0;i<n;i++){ out.push(base+(rem>0?1:0)); if(rem>0) rem--; } return out; }
+function mealsFor(d, r){
+  const sch = MEALS[stageOf(d)]; const nDry = sch.filter(m=>m[1]==="dry").length;
+  const dryParts = splitEven(r.dry, nDry), oldParts = splitEven(r.oldG, nDry), newParts = splitEven(r.newG, nDry);
+  let di = 0, wi = 0;
+  return sch.map(([t,type]) => {
+    const tt = t.slice(0,2)+":"+t.slice(2);
+    if(type==="dry"){ const g = dryParts[di]; const sub = r.tr ? "Смешать: "+oldParts[di]+" г старого («"+FOODS[r.tr.from].dryShort+"») + "+newParts[di]+" г нового («"+FOODS[r.tr.to].dryShort+"»)" : "Без весов: "+spoonsDry(g); di++;
+      return {key:t, t:tt, type, label:g+" г сухого", sub}; }
+    wi++;
+    return {key:t, t:tt, type, label:(wi===1?"42":"43")+" г влажного",
+      sub: wi===1 ? "Половина пакетика, примерно 3 столовые ложки. Остаток пакетика закрыть и убрать в холодильник" : "Вторая половина пакетика из холодильника, примерно 3 столовые ложки. Подержать 20–30 минут при комнатной температуре"};
+  });
+}
+
+/* ---------- Рост ---------- */
+const BASE_DAY = diff(DOB, BASE_W.d);
+const RATES = [[150,70,100,140],[240,40,70,100],[365,20,40,60]];
+function corridor(day){ let lo=BASE_W.g, mid=BASE_W.g, hi=BASE_W.g, d=BASE_DAY; for(const [u,a,b,c] of RATES){ if(day<=d) break; const seg=Math.min(day,u)-d; if(seg>0){ lo+=a*seg/7; mid+=b*seg/7; hi+=c*seg/7; d+=seg; } } return {lo,mid,hi}; }
+
+/* ---------- Уход ---------- */
+const isShedding = d => { const m = P(d).getMonth()+1; return m===3||m===4||m===10||m===11; };
+const CARE = [
+  {g:"Каждую неделю — в субботу", items:[
+    {id:"weigh", title:"Взвесить", every:d => d<Y1?7:30, first:"2026-10-17", auto:true, how:["Утром до еды. Записать вес на «Сегодня» — порции пересчитаются сами.","До года — каждую неделю, потом — раз в месяц."]},
+    {id:"brush", title:"Вычесать шерсть", every:d => isShedding(d)?3:7, first:"2026-10-11", how:["Резиновой рукавицей или мягкой пуходёркой по росту шерсти, 3–5 минут.","В линьку (март–апрель, октябрь–ноябрь) — каждые 3 дня, приложение напомнит само.","После — игра или ласка, чтобы ему нравилось."]},
+    {id:"ears", title:"Уши и глаза", every:7, first:"2026-10-11", how:["Уши внутри розовые, без запаха и тёмного налёта.","Налёт есть — протереть видимую часть ватным диском с лосьоном для ушей. Ватные палочки внутрь не вставлять.","Корочки в уголках глаз — протереть влажным диском, для каждого глаза свой.","Чешет уши, трясёт головой, сильный запах или гной из глаз — к врачу."]},
+    {id:"bowls", title:"Миски и лежанка", every:7, first:"2026-10-17", how:["Миски помыть с содой, без средства с запахом.","Лежанку или плед постирать."]}
+  ]},
+  {g:"Два раза в неделю", items:[
+    {id:"teeth", title:"Зубы", every:3, first:"2026-10-13", how:["Напалечник или мягкая щётка с пастой для кошек, 20–30 секунд по внешней стороне зубов.","С 3 до 7 месяцев меняются зубы — дёсны могут быть красноватыми, это нормально.","Человеческую пасту нельзя."]}
+  ]},
+  {g:"Раз в две недели", items:[
+    {id:"nails", title:"Когти", every:14, first:"2026-10-17", how:["Когтерезом срезать только прозрачный кончик, 1–2 мм. Розовую часть не трогать — там сосуд.","Страшно самим — «когтикюр» в «Кус хвост», Михалковская 48к1, 800 ₽."]},
+    {id:"litter", title:"Полностью сменить наполнитель", every:14, first:"2026-10-24", how:["Высыпать всё, лоток помыть горячей водой без хлорки и резких запахов, высушить.","Насыпать слой 5–7 см."]},
+    {id:"toys", title:"Поменять игрушки", every:14, first:"2026-10-24", how:["Половину игрушек убрать в шкаф, спрятанные достать — старые снова станут интересными.","Порванные игрушки, нитки и мелкие детали — выбросить."]}
+  ]},
+  {g:"Раз в три недели", items:[
+    {id:"grass", title:"Посадить кошачью траву", every:21, first:"2026-11-01", how:["Семена овса или пшеницы для кошек — в горшок или лоток с землёй, полить. Через 5–7 дней трава готова.","Коты её жуют с удовольствием, это помогает выводить шерсть из желудка.","Комнатные цветы при этом лучше убрать повыше."]}
+  ]},
+  {g:"Раз в месяц", items:[
+    {id:"bcs", title:"Оценить фигуру", every:30, first:"2026-11-07", bcs:true, how:["Проведите ладонью по бокам: рёбра должны легко прощупываться, но не торчать. Сверху над бёдрами видна талия.","Выберите, что ближе, — приложение само поправит порцию."]},
+    {id:"joints", title:"Проверить хвост и лапы", every:30, first:"2026-10-30", how:["Хвост гибкий по всей длине: аккуратно согнуть — не жёсткий и не больно.","Походка ровная, прыгает охотно, не хромает.","Если что-то изменилось — к врачу. У вислоухих бывает болезнь суставов, её важно заметить рано."]},
+    {id:"photo", title:"Фото на память", every:30, first:"2026-10-30", how:["Сфотографируйте Джери на одном и том же месте, например на любимом пледе.","Через год соберёте ролик, как он вырос."]},
+    {id:"post", title:"Когтеточка и домик", every:30, first:"2026-11-10", how:["Когтеточка стоит устойчиво, не разлохмачена. Разлохмачена — пора новую.","Коробка из-под доставки — лучший бесплатный домик, поставьте на пару дней."]}
+  ]}
+];
+const CARE_FLAT = CARE.flatMap(g=>g.items);
+const everyOf = (t,d) => typeof t.every === "function" ? t.every(d) : t.every;
+
+const DAILY = [
+  ["water_am","Вода — утром","Помыть миску, налить свежую"],
+  ["water_pm","Вода — вечером","Свежая вода на ночь"],
+  ["litter_am","Лоток — утром","Убрать комки совком"],
+  ["litter_pm","Лоток — вечером","Убрать комки совком"],
+  ["play","Поиграть 2–3 раза по 10–15 минут","Удочкой-дразнилкой, в конце дать «поймать». Руками не играть — привыкнет кусать"]
+];
+
+/* ---------- План ---------- */
+const CLINIC = "Ветклиника на Смольной (Смольная ул., 2, круглосуточно)";
+const GROOMER = "«Кус хвост», Михалковская 48к1 (соседний дом) или груминг «Четыре Лапы», Михалковская 4А";
+const PLAN_FIRST = [
+  {id:"p_dew0", from:"2026-09-17", title:"Глистогонка", passport:true, body:["Сделано у заводчика. Ветпаспорт, стр. 12."]},
+  {id:"p_vac1", from:"2026-09-27", title:"1-я комплексная прививка «Мультифел»", passport:true, body:["Серия 40, годна до 05.2027. Ветпаспорт, стр. 14."]},
+  {id:"p_home", from:"2026-10-10", to:"2026-10-12", title:"Подготовить дом и купить нужное", body:["Список с ценами — «Уход» → «Первая неделя дома». Главное: сетки на окна и кухонные весы."]},
+  {id:"p_dew1", from:"2026-10-10", to:"2026-10-11", title:"Глистогонка перед второй прививкой", body:["Мильбемакс для котят — половинка таблетки: разломить одну таблетку пополам по риске. По инструкции так дают при весе от 0,5 до 1 кг.","Половинку спрятать в чайную ложку влажного корма утром, проследить, что съел.","Через 10–14 дней — прививка."], where:"Ветаптека в клинике или «Четыре Лапы»", cost:"815 ₽ за 2 таблетки"},
+  {id:"p_vac2", from:"2026-10-21", to:"2026-10-25", vet:true, title:"Врач: осмотр + 2-я прививка + бешенство", body:["Позвонить и записаться заранее.","Взять ветпаспорт и переноску с пелёнкой.","Вторая комплексная прививка и прививка от бешенства — врач может сделать их в один день.","2 недели после: не купать, на улицу не выносить, без сквозняков. Сутки вялости после прививки — нормально."], where:CLINIC, cost:"≈ 4 000 ₽: приём 1 000 + «Мультифел» с бешенством 3 000 по прайсу клиники", questions:["Вес 750 г в 10 недель — нормально для него?","Какой вакциной делать вторую дозу? (см. заметку ниже)","Нужна ли обработка от блох, если он живёт только дома?","Когда кастрация и нужно ли УЗИ сердца перед наркозом?","Когда лучше ставить чип?"], note:"Про «Мультифел». В сентябре 2026 в новостях писали о реакциях у кошек после этой вакцины. Производитель и Россельхознадзор заявили, что обращений о гибели кошек не получали, серии «Мультифела» не отзывали (отзывали собачий «Мультикан-8»). Первая прививка у Джери уже позади. Спросите врача, чем делать вторую."},
+  {id:"p_3m", from:"2026-10-30", info:true, title:"Джери 3 месяца", body:["Кормлений теперь 4 в день — расписание на «Сегодня» поменяется само.","С этого дня можно бесплатно привиться от бешенства в госклинике, если не сделали в клинике."]},
+  {id:"p_q", from:"2026-11-08", info:true, title:"Конец карантина после прививок", body:["Через 2 недели после второй прививки иммунитет готов. Можно звать гостей и знакомить с другими животными."]},
+  {id:"p_groom0", from:"2026-11-10", to:"2026-11-30", groom:true, title:"Груминг: первое знакомство", body:["Сходить на «когтикюр» — пусть привыкает к грумеру с детства, пока процедура короткая.","Взять переноску с пелёнкой и любимую игрушку."], where:GROOMER, cost:"≈ 500–800 ₽"},
+  {id:"p_teeth", from:"2026-11-01", to:"2027-02-28", info:true, title:"Меняются зубы", body:["С 3 до 7 месяцев. Давать грызть резиновые игрушки, раз в неделю смотреть рот.","Молочный зуб не выпал, а рядом уже растёт постоянный — показать врачу."]},
+  {id:"p_ny", from:"2026-12-20", to:"2027-01-10", title:"Новый год без происшествий", body:["Без дождика и мишуры — котята их глотают, это частая причина операций.","Ёлку закрепить, стеклянные игрушки — повыше.","В новогоднюю ночь закрыть окна и оставить место, где спрятаться от салюта."]},
+  {id:"p_dew2", from:"2027-01-08", to:"2027-01-12", title:"Глистогонка", body:["Мильбемакс: при весе 1–2 кг — 1 таблетка для котят, больше 2 кг — таблетка для кошек, по инструкции."], cost:"≈ 400–800 ₽"},
+  {id:"p_pre", from:"2027-01-15", to:"2027-01-29", vet:true, title:"Врач: осмотр перед кастрацией", body:["Анализы крови: общий и биохимия.","УЗИ сердца (ЭхоКГ) — вислоухим советуют перед наркозом.","Договориться о дате кастрации."], where:CLINIC, cost:"≈ 6 000 ₽: приём 1 000, анализы ≈ 1 600, УЗИ сердца 3 000–4 000"},
+  {id:"p_6m", from:"2027-01-30", info:true, title:"Джери 6 месяцев", body:["Половина пути до взрослого. Скоро кастрация."]},
+  {id:"p_cast", from:"2027-02-01", to:"2027-02-28", vet:true, title:"Кастрация + чип", body:["Лучше в 6–7 месяцев, пока не начал метить.","Чип поставить под тем же наркозом — он ничего не почувствует.","Перед операцией не кормить 8–12 часов, точное время скажет врач. Воду можно.","После: 7–10 дней в попоне или воротнике, шов смотреть каждый день.","После операции отметить «Джери кастрирован» во вкладке «Джери» — порции пересчитаются."], where:CLINIC, cost:"≈ 8 000–10 000 ₽: кастрация от 5 000 + препараты, чип 2 000"},
+  {id:"p_dew3", from:"2027-04-08", to:"2027-04-12", title:"Глистогонка", body:["Таблетка для кошек по весу, по инструкции."], cost:"≈ 400–800 ₽"},
+  {id:"p_dew4", from:"2027-07-08", to:"2027-07-12", title:"Глистогонка перед годовой прививкой", body:["За 10–14 дней до прививки."], cost:"≈ 400–800 ₽"},
+  {id:"p_year", from:"2027-07-20", to:"2027-07-29", vet:true, title:"Врач: годовой осмотр и прививки", body:["Комплексная прививка + бешенство. От бешенства — каждый год.","Взвесить, проверить зубы и суставы."], where:CLINIC, cost:"≈ 4 000 ₽"},
+  {id:"p_1y", from:"2027-07-30", info:true, title:"Джери 1 год", body:["С сегодняшнего дня приложение 10 дней само расписывает переход на корм для взрослых: сколько граммов старого и нового смешивать.","Новый корм — "+FOODS.adult.dry+" и "+FOODS.adult.wet+". Купите заранее."]}
+];
+function birthdayBody(age){
+  if(age===7) return ["С этого дня приложение 10 дней расписывает переход на корм 7+: "+FOODS.mature.dry+".","С 7 лет анализы крови и мочи — каждый год."];
+  if(age===11) return ["С этого года врач — раз в полгода.","Низкий лоток и мягкая лежанка — суставам будет легче."];
+  if(age===12) return ["Порции станут чуть больше — пожилым котам нужно больше энергии. Приложение пересчитает само."];
+  return ["Праздничный ужин: обычная порция влажного корма, выложенная формочкой как торт.","Новая игрушка и фото на память — как в прошлом году."];
+}
+function genLife(){
+  const ev = [];
+  for(let y=2027; y<=2046; y++){
+    const age = y-2026;
+    for(const m of ["01","04","07","10"]){
+      const from = y+"-"+m+"-08"; if(from <= "2027-07-12") continue;
+      ev.push({id:"dew_"+y+"-"+m, from, to:y+"-"+m+"-12", title: m==="07"?"Глистогонка перед годовой прививкой":"Глистогонка", body:["Таблетка от глистов для кошек по весу — по инструкции.","Раз в 3 месяца, всю жизнь."], cost:"≈ 400–800 ₽"});
+    }
+    if(y>=2027){
+      ev.push({id:"cats_"+y, from:y+"-03-01", info:true, title:"1 марта — День кошек", body:["Повод для новой игрушки или когтеточки. И фото в семейный чат."]});
+      ev.push({id:"wcd_"+y, from:y+"-08-08", info:true, title:"8 августа — Всемирный день кошек", body:["Устройте охоту: спрячьте сухой корм из обычной порции по комнате — пусть ищет."]});
+      ev.push({id:"groomA_"+y, from:y+"-04-01", to:y+"-04-20", groom:true, title:"Груминг: весенняя линька", body:["Экспресс-линька у грумера: вычешут подшёрсток, меньше шерсти дома и в желудке.","Заодно — стрижка когтей и чистка ушей."], where:GROOMER, cost:"≈ 3 500–4 900 ₽"});
+      ev.push({id:"groomO_"+y, from:y+"-10-01", to:y+"-10-20", groom:true, title:"Груминг: осенняя линька", body:["Экспресс-линька у грумера перед зимой.","Заодно — стрижка когтей и чистка ушей."], where:GROOMER, cost:"≈ 3 500–4 900 ₽"});
+    }
+    if(y>=2028){
+      ev.push({id:"vet_"+y, from:y+"-07-20", to:y+"-07-29", vet:true, title:"Врач: годовой осмотр и прививки",
+        body:["Комплексная прививка + бешенство (от бешенства — каждый год).","Вес, зубы, суставы, сердце — послушать."].concat(age>=3?["Если есть налёт или запах изо рта — спросить про чистку зубов у врача."]:[]).concat(age>=7?["Анализы крови и мочи — с 7 лет каждый год."]:[]),
+        where:CLINIC, cost: age>=7 ? "≈ 7 000 ₽ с анализами" : "≈ 4 000 ₽"});
+      ev.push({id:"bd_"+y, from:y+"-07-30", info:true, title:"Джери "+age+" "+plural(age,["год","года","лет"]), body:birthdayBody(age)});
+    }
+    if(y>=2038){
+      ev.push({id:"vet6_"+y, from:y+"-01-20", to:y+"-01-29", vet:true, title:"Врач: осмотр раз в полгода", body:["Анализы крови и мочи, давление, вес.","С 11 лет — каждые полгода."], where:CLINIC, cost:"≈ 5 000 ₽"});
+    }
+  }
+  return ev;
+}
+const PLAN = PLAN_FIRST.concat(genLife()).sort((a,b)=> a.from.localeCompare(b.from));
+
+const PLACES = [
+  {name:"Ветклиника на Смольной", tag:"Основная · круглосуточно", addr:"Смольная ул., 2", dist:"≈ 1 км, у метро «Водный стадион»", phone:"+7 925 181-20-19", hours:"круглосуточно, без выходных", site:"https://vetsmol.ru/price", siteL:"Прайс на vetsmol.ru", note:"По прайсу: приём 1 000 ₽, «Мультифел» + бешенство 3 000 ₽, чип 2 000 ₽, кастрация от 5 000 ₽, стрижка когтей 500 ₽."},
+  {name:"Berkin Hoff", tag:"Ближе всех", addr:"Нарвская ул., 9А", dist:"≈ 750 м, 12 минут пешком", phone:"+7 499 113-77-60", hours:"9:00–21:00", site:"https://berkin-hoff.ru/", siteL:"berkin-hoff.ru", note:"Запасной вариант днём: приём 1 000 ₽, вакцинация 3 000 ₽, кастрация 5 500 ₽."},
+  {name:"Госклиника СББЖ САО", tag:"Бешенство бесплатно", addr:"2-й Лихачёвский пер., 6", dist:"≈ 1,2 км", phone:"+7 495 612-12-12", hours:"9:00–21:00", site:"https://mos-obvet.ru/clinics/sbbzh-severnogo-okruga/", siteL:"mos-obvet.ru", note:"Бесплатная прививка от бешенства с 3 месяцев (для Джери — с 30 октября). Нужны ветпаспорт и глистогонка заранее. Запись на mos.ru или по телефону."},
+  {name:"Кус хвост", tag:"Груминг, соседний дом", addr:"Михалковская ул., 48к1", dist:"соседний дом", phone:"+7 904 567-98-19", hours:"до 21:00", site:"https://kycxboct.su", siteL:"kycxboct.su", note:"Груминг короткошёрстного кота 4 900 ₽, «когтикюр» 800 ₽."},
+  {name:"Четыре Лапы", tag:"Груминг; товары — на сайте", addr:"Михалковская ул., 4А", dist:"≈ 1,6 км", phone:"+7 495 136-41-63", hours:"до 21:00", site:"https://4lapy.ru", siteL:"4lapy.ru", note:"Экспресс-линька 3 500 ₽, стрижка когтей 500 ₽, чистка ушей 500 ₽."}
+];
+
+const START = [
+  {g:"Безопасность", items:[
+    ["s_net","Сетки «антикошка» на окна, которые открываете","Обычная москитная сетка кота не держит, а котята часто выпадают из окон."],
+    ["s_wires","Провода убрать в короб или за мебель",""],
+    ["s_chem","Бытовая химия и лекарства — в закрытые шкафы",""],
+    ["s_plants","Убрать лилии и другие ядовитые растения","Лилия опасна даже пыльцой."],
+    ["s_small","Нитки, резинки, пакеты, мелкие детали — убрать",""],
+    ["s_wash","Стиральную машину проверять перед стиркой, крышку унитаза закрывать",""],
+    ["s_food","Со стола ничего не давать","Лук, чеснок, шоколад, виноград, кости и молоко — нельзя."]
+  ]},
+  {g:"Купить", items:[
+    ["b_scale","Кухонные весы с шагом 1 г","для сухого корма и взвешивания"],
+    ["b_tray","Лоток с бортиком + совок","609–815 ₽"],
+    ["b_litter","Наполнитель — сначала тот же, что был у заводчика","комкующийся 10 кг ≈ 640–1 085 ₽"],
+    ["b_bowls","Три миски: влажный, сухой, вода","керамика или металл"],
+    ["b_post","Когтеточка-столбик, устойчивая","879–2 649 ₽"],
+    ["b_brush","Резиновая рукавица или пуходёрка","299–927 ₽"],
+    ["b_clip","Когтерез","385–519 ₽"],
+    ["b_lotion","Лосьоны для глаз и ушей, ватные диски","по 365 ₽"],
+    ["b_paste","Зубная паста для кошек","429 ₽"],
+    ["b_toys","Удочка-дразнилка и мячики",""],
+    ["b_bed","Лежанка или домик",""],
+    ["b_grass","Семена кошачьей травы и горшок",""],
+    ["b_dew","Мильбемакс для котят","815 ₽"]
+  ]}
+];
+
+/* ---------- Советы ---------- */
+const TIPS = {
+  k0:["Котята много спят — до 20 часов в сутки. Это нормально.","Приучайте к рукам: каждый день на пару секунд трогайте лапы, уши и рот. Потом будет легко стричь когти и чистить уши.","Держите переноску открытой в комнате, с пледом внутри. Джери привыкнет, и поездки к врачу будут спокойнее.","Лоток — подальше от мисок. Промахнулся — не ругайте, просто уберите и протрите средством без хлорки."],
+  k3:["Меняются зубы — Джери будет грызть всё подряд. Дайте резиновые игрушки и уберите провода.","Кусается в игре — сразу прекращайте игру и отходите. Так он быстро поймёт, что зубами нельзя.","Ставьте когтеточку там, где он царапает мебель, и хвалите, когда точит когти на ней.","Просит еду между кормлениями — проверьте, не пропустили ли кормление по графику."],
+  k6:["После кастрации коты склонны полнеть. Приложение само уменьшит порцию — главное, отметить кастрацию.","Играйте каждый день 2–3 раза по 10–15 минут — это лучшая защита от лишнего веса.","Кошачья мята действует примерно с 6 месяцев — можно попробовать игрушку с мятой.","Начал метить или громко звать по ночам — пора обсудить кастрацию с врачом."],
+  a1:["Взрослого кота взвешивайте раз в месяц. Вес меняется больше чем на 200 г за месяц — проверьте фигуру.","Поставьте вторую миску с водой в другой комнате — коты пьют больше, когда вода не рядом с едой.","Охота за едой: спрячьте часть сухой порции по комнате. Это и игра, и меньше переедания.","Раз в год у врача — прививки и осмотр зубов."],
+  a3:["Запах изо рта и красные дёсны — повод показать зубы врачу.","Стал меньше прыгать на любимые места — расскажите врачу: у вислоухих бывают проблемы с суставами.","Лишние 500 г для кота весом 4,5 кг — это больше 10% веса. Следите за фигурой каждый месяц.","Новая коробка или пакет из крафт-бумаги (без ручек) — бесплатное развлечение на неделю."],
+  m7:["С 7 лет — анализы крови и мочи каждый год: так рано замечают болезни почек.","Мягкая лежанка и ступенька на любимый подоконник берегут суставы.","Корм 7+ — для зрелых котов. Порции приложение считает само."],
+  s11:["Пожилые коты пьют меньше, чем нужно. Влажный корм каждый день и фонтанчик для воды помогают почкам.","Лоток с низким бортиком — легче забираться.","Худеет без причины, много пьёт или чаще ходит в лоток — к врачу, не ждите планового приёма.","Когти у пожилых котов стачиваются хуже — проверяйте их раз в 2 недели."]
+};
+function tipsFor(d){
+  const days = diff(DOB,d);
+  const key = days<92?"k0" : days<184?"k3" : d<Y1?"k6" : d<"2029-07-30"?"a1" : d<Y7?"a3" : d<Y11?"m7" : "s11";
+  const list = TIPS[key]; const week = Math.floor(diff("2026-01-05",d)/7);
+  const out = [list[((week%list.length)+list.length)%list.length]];
+  const m = P(d).getMonth()+1, day = P(d).getDate();
+  if((m===12 && day>=15) || (m===1 && day<=10)) out.push("Праздники: без дождика и мишуры, ёлку закрепить, в новогоднюю ночь — закрытые окна.");
+  else if(isShedding(d)) out.push("Сейчас линька: вычёсывайте каждые 3 дня, приложение уже поменяло график. Шерсть в желудке выводит кошачья трава.");
+  else if(m>=5 && m<=9) out.push("Тёплый сезон: окна открываете чаще — только с сетками «антикошка». В жару поставьте воду в двух-трёх местах.");
+  return out;
+}
+
+/* ---------- Состояние и хранилище ---------- */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz76PvLKcBWE2PP35RCx0R6r6YWLSllZ06CunIrBUfTAI1LzNiWIffJ5fe0P9pQYqF/exec";
+const S = {day:{}, plan:{}, care:{}, start:{}, weights:[], profile:{}, expenses:[], history:[], recent:[]};
+let DOCS = {};
+let mode = "loading", standalone = false, canWrite = true, uid = null, userApi = null, dbApi = null, dayKey = today(), daySub = null;
+let pending = 0, loadErr = false, keyBad = false, histLoaded = false;
+const names = {};
+const ls = {get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} }};
+let myName = ls.get("jerry-name") || null;
+let famKey = null;
+(function(){ const m = (location.hash||"").match(/k=([A-Za-z0-9_-]{6,64})/); if(m){ famKey = m[1]; ls.set("jerry-key", famKey); } else famKey = ls.get("jerry-key"); })();
+
+const LKEY = "jerry-plan-local-v2", CKEY = "jerry-cache-v1";
+function lload(){ try{ return JSON.parse(ls.get(LKEY)||"{}"); }catch(e){ return {}; } }
+function lsave(o){ ls.set(LKEY, JSON.stringify(o)); }
+function deepMerge(a,b){ const o = Object.assign({}, (a && typeof a==="object") ? a : {}); for(const k in b){ const v=b[k]; if(v && typeof v==="object" && !Array.isArray(v)) o[k]=deepMerge(o[k],v); else o[k]=v; } return o; }
+
+function applyDocs(){
+  S.day = DOCS["days/"+dayKey]||{}; S.plan = DOCS["jerry/plan"]||{}; S.care = DOCS["jerry/care"]||{};
+  S.start = DOCS["jerry/start"]||{}; S.weights = (DOCS["jerry/weights"]||{}).list||[]; S.profile = DOCS["jerry/profile"]||{};
+  S.expenses = Object.keys(DOCS).filter(k=>k.indexOf("exp/")===0).map(k=>Object.assign({}, DOCS[k], {id:k.slice(4)})).sort((a,b)=>(b.d||"").localeCompare(a.d||""));
+  if(mode==="local"){ S.history = (DOCS.__hist||[]).slice().reverse(); S.recent = S.history.slice(0,5); }
+  render();
+}
+
+/* общий сервер: Google Таблица через Apps Script */
+async function apiGet(params){
+  const u = SCRIPT_URL+"?"+new URLSearchParams(Object.assign({k:famKey||""}, params)).toString();
+  const r = await fetch(u, {redirect:"follow"}); const j = await r.json();
+  if(j && j.error){ const e = new Error(j.error); e.code = j.error; throw e; } return j;
+}
+async function apiPost(body){
+  const r = await fetch(SCRIPT_URL, {method:"POST", redirect:"follow", body: JSON.stringify(Object.assign({k:famKey||""}, body))});
+  const j = await r.json(); if(j && j.error){ const e = new Error(j.error); e.code = j.error; throw e; } return j;
+}
+function apiFail(e){
+  if(e && e.code==="key"){ if(!keyBad){ keyBad = true; renderBanner(); } return; }
+  if(!loadErr){ loadErr = true; renderBanner(); }
+}
+async function apiRefresh(){
+  if(pending>0 || !famKey) return;
+  try{
+    const j = await apiGet({action:"state", day:dayKey});
+    if(pending>0) return;
+    DOCS = j.docs || {}; S.recent = j.recent || [];
+    ls.set(CKEY, JSON.stringify({day:dayKey, docs:DOCS, recent:S.recent}));
+    if(loadErr || keyBad){ loadErr=false; keyBad=false; renderBanner(); }
+    applyDocs();
+    if(histLoaded) loadHistory();
+  }catch(e){ apiFail(e); }
+}
+async function loadHistory(){
+  if(mode==="api"){ if(!famKey) return; try{ const j = await apiGet({action:"history"}); S.history = j.items || []; histLoaded = true; renderHistory(); }catch(e){ apiFail(e); } }
+  else renderHistory();
+}
+function localOp(op, path, obj){ if(op==="merge") DOCS[path]=deepMerge(DOCS[path],obj); else if(op==="set") DOCS[path]=obj; else delete DOCS[path]; }
+function pushLocalHist(text){ if(!text) return; const h = DOCS.__hist || []; h.push({at:new Date().toISOString(), who:"", text}); DOCS.__hist = h.slice(-300); }
+
+async function write(op, path, obj, log){
+  if(mode==="db"){
+    const ref = dbApi.doc(path);
+    try{
+      if(op==="merge"){
+        try{ await ref.update(obj); }
+        catch(e){ if(e && e.code==="invalid_argument"){ const snap = await ref.get(); if(!snap.exists){ await ref.set(obj); } else throw e; } else throw e; }
+      } else if(op==="set") await ref.set(obj); else await ref.delete();
+      if(log){ try{ await dbApi.collection("history").add({at:new Date().toISOString(), by:meId(), text:log}); }catch(e){} }
+    }catch(e){ if(e && e.code==="invalid_argument") readOnly(); else toast("Не сохранилось. Проверьте интернет и нажмите ещё раз."); }
+    return;
+  }
+  localOp(op, path, obj);
+  if(mode==="api"){
+    if(log) S.recent = [{at:new Date().toISOString(), who:myName||"", text:log}].concat(S.recent||[]).slice(0,5);
+    applyDocs();
+    pending++;
+    try{ await apiPost({op, path, data: op==="del"?null:obj, who: myName||"", log: log||""}); }
+    catch(e){ if(e && e.code==="key") apiFail(e); else toast("Не сохранилось. Проверьте интернет и нажмите ещё раз."); }
+    finally{ pending--; }
+    if(pending===0) apiRefresh();
+    return;
+  }
+  pushLocalHist(log); lsave(DOCS); applyDocs();
+}
+const merge = (p,o,l) => write("merge",p,o,l);
+const setDoc = (p,o,l) => write("set",p,o,l);
+function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+async function saveExpense(id, obj, log){
+  if(mode==="db"){ try{ await dbApi.collection("expenses").doc(id).set(obj); if(log) await dbApi.collection("history").add({at:new Date().toISOString(), by:meId(), text:log}); }catch(e){ if(e&&e.code==="quota_exceeded") toast("Место для трат закончилось — удалите старые записи."); else if(e&&e.code==="invalid_argument") readOnly(); else toast("Не сохранилось. Попробуйте ещё раз."); } return; }
+  await write("set", "exp/"+id, obj, log);
+}
+async function delExpense(id, log){
+  if(mode==="db"){ try{ await dbApi.doc("expenses/"+id).delete(); if(log) await dbApi.collection("history").add({at:new Date().toISOString(), by:meId(), text:log}); }catch(e){ toast("Не удалилось. Попробуйте ещё раз."); } return; }
+  await write("del", "exp/"+id, null, log);
+}
+function readOnly(){ if(canWrite){ canWrite=false; renderBanner(); toast("Нет прав на отметки — нужен доступ «Редактор»."); } }
+function watch(path, fn){ return dbApi.doc(path).onSnapshot(s => { fn(s.exists ? s.data() : {}); render(); }, onDbErr); }
+function onDbErr(e){ if(e && (e.code==="revoked" || e.code==="not_granted")){ mode="local"; DOCS=lload(); applyDocs(); renderBanner(); } }
+function subscribeDay(){ if(daySub){ try{daySub();}catch(e){} } daySub = watch("days/"+dayKey, d => { S.day = d; }); }
+
+async function init(){
+  render(); renderBanner();
+  const cl = window.claude;
+  const useApi = window.JERRY_FORCE_API || ((!cl || typeof cl.use!=="function") && /^https?:$/.test(location.protocol));
+  if(useApi){
+    mode = "api";
+    try{ const c = JSON.parse(ls.get(CKEY)||"null"); if(c && c.docs){ DOCS = c.docs; S.recent = c.recent||[]; if(c.day!==dayKey) delete DOCS["days/"+c.day]; } }catch(e){}
+    applyDocs(); renderBanner();
+    await apiRefresh();
+    setInterval(()=>{ if(document.visibilityState==="visible") apiRefresh(); }, 15000);
+    document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") apiRefresh(); });
+    return;
+  }
+  if(!cl || typeof cl.use!=="function"){ mode="local"; standalone=true; DOCS=lload(); applyDocs(); renderBanner(); return; }
+  let db=null, u=null;
+  try{ [db,u] = await Promise.all([cl.use("db"), cl.use("user")]); }catch(e){}
+  userApi = u;
+  if(u){ try{ uid = await u.id(); }catch(e){} try{ const c = await u.can("data.write"); if(c===false) canWrite=false; }catch(e){} }
+  if(!db){ mode="local"; DOCS=lload(); applyDocs(); renderBanner(); return; }
+  dbApi = db; mode="db"; renderBanner();
+  subscribeDay();
+  watch("jerry/plan", d => { S.plan = d; });
+  watch("jerry/care", d => { S.care = d; });
+  watch("jerry/start", d => { S.start = d; });
+  watch("jerry/weights", d => { S.weights = Array.isArray(d.list) ? d.list : []; });
+  watch("jerry/profile", d => { S.profile = d; });
+  db.collection("expenses").orderBy("d","desc").limit(300).onSnapshot(qs => { S.expenses = qs.docs.map(x => Object.assign({id:x.id}, x.data())); render(); }, onDbErr);
+  db.collection("history").orderBy("at","desc").limit(300).onSnapshot(qs => { S.history = qs.docs.map(x => { const v = x.data(); return {at:v.at, who:v.by, text:v.text}; }); S.recent = S.history.slice(0,5); render(); renderHistory(); }, onDbErr);
+}
+
+/* ---------- Кто отметил ---------- */
+const meId = () => mode==="api" ? (myName||"") : (uid || "local");
+function mark(){ return {by: meId(), at: new Date().toISOString()}; }
+function byName(by){ if(!by) return ""; if(mode==="db") return by===uid ? "вы" : (names[by]||""); if(mode==="api") return by; return ""; }
+function whoLabel(m){ if(!m) return ""; const t = m.at ? hhmm(m.at) : ""; const n = byName(m.by); return "✓ "+t+(n ? " · "+n : ""); }
+let nameTimer = null;
+function resolveNames(){
+  if(!userApi || mode!=="db") return; clearTimeout(nameTimer);
+  nameTimer = setTimeout(async () => {
+    const ids = new Set(); const add = m => { if(m && m.by && m.by!==uid && m.by!=="local") ids.add(m.by); };
+    Object.values(S.day.m||{}).forEach(add); Object.values(S.day.d||{}).forEach(add);
+    Object.values(S.plan.done||{}).forEach(add); Object.values(S.start.done||{}).forEach(add);
+    Object.values(S.care.last||{}).forEach(add); S.weights.forEach(add); S.expenses.forEach(add);
+    (S.history||[]).forEach(h => add({by:h.who}));
+    const list = [...ids]; if(!list.length) return;
+    try{ const ps = await userApi.profiles(list); let ch=false; for(const id of list){ const n=(ps[id]&&ps[id].name)||""; if(n && names[id]!==n){ names[id]=n; ch=true; } } if(ch){ render(); renderHistory(); } }catch(e){}
+  }, 150);
+}
+
+/* ---------- Производные ---------- */
+function allWeights(){
+  const m = new Map(); m.set(BASE_W.d, {d:BASE_W.d, g:BASE_W.g, base:true});
+  for(const w of S.weights){ if(w && w.d && w.g) m.set(w.d, w); }
+  return [...m.values()].sort((a,b)=>a.d.localeCompare(b.d));
+}
+function latestWeight(d){ const ws = allWeights().filter(w=>w.d<=d); return ws[ws.length-1] || {d:BASE_W.d, g:BASE_W.g}; }
+function careLast(id){ if(id==="weigh"){ const ws = allWeights(); return {d: ws[ws.length-1].d}; } const l = (S.care.last||{})[id]; return l && l.d ? l : null; }
+function careNext(t,d){ const l = careLast(t.id); return l ? addDays(l.d, everyOf(t, d||today())) : t.first; }
+function planDone(id){ return (S.plan.done||{})[id] || null; }
+function evState(e, d){
+  const to = e.to || e.from;
+  if(e.passport) return "done";
+  if(!e.info && planDone(e.id)) return "done";
+  if(e.info) return to < d ? "past" : (e.from<=d ? "now" : "future");
+  if(e.from<=d && d<=to) return "now";
+  if(to < d) return "late";
+  return "future";
+}
+function ageText(d){
+  const days = diff(DOB,d);
+  if(days < 182){ const w = Math.floor(days/7), r = days%7; return w+" "+plural(w,["неделя","недели","недель"])+(r?" "+r+" "+plural(r,["день","дня","дней"]):""); }
+  const a=P(DOB), b=P(d); let months = (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth()); if(b.getDate()<a.getDate()) months--;
+  if(months < 12) return months+" "+plural(months,["месяц","месяца","месяцев"]);
+  const y = Math.floor(months/12), mm = months%12;
+  return y+" "+plural(y,["год","года","лет"])+(mm?" "+mm+" "+plural(mm,["месяц","месяца","месяцев"]):"");
+}
+const STAGE_NAME = d => d<Y1 ? "котёнок" : d<Y7 ? "взрослый кот" : d<Y11 ? "зрелый кот" : "пожилой кот";
+function weightStatus(){
+  const ws = allWeights(); const last = ws[ws.length-1]; const day = diff(DOB,last.d);
+  let st = {cls:"ok", text: last.d < Y1 ? "Растёт по плану" : "Вес в порядке"};
+  if(last.d < Y1){
+    const c = corridor(day);
+    if(last.g < c.lo - 100) st = {cls:"warn", text:"Легче ориентира — покажите врачу"};
+    if(last.g > c.hi + 150) st = {cls:"warn", text:"Тяжелее ориентира — порции не увеличивать"};
+  }
+  if(ws.length>1){
+    const prev = ws[ws.length-2]; const dd = diff(prev.d,last.d);
+    if(dd>=4){
+      const perWeek = (last.g-prev.g)/dd*7; st.delta = Math.round(perWeek);
+      if(last.d < Y1){
+        if(last.g < prev.g) st = Object.assign(st,{cls:"alert", text:"Похудел — позвоните врачу"});
+        else if(perWeek < 50 && day < 180) st = Object.assign(st,{cls:"warn", text:"Мало прибавил за неделю — покажите врачу"});
+      } else {
+        const pct = (last.g-prev.g)/prev.g*100;
+        if(pct <= -10) st = Object.assign(st,{cls:"alert", text:"Похудел больше чем на 10% — к врачу"});
+        else if(Math.abs(pct) >= 5) st = Object.assign(st,{cls:"warn", text: pct>0?"Набирает вес — проверьте фигуру":"Худеет — проверьте фигуру и аппетит"});
+      }
+    }
+  }
+  return st;
+}
+
+/* ---------- Рендер ---------- */
+function render(){
+  const open = new Set([...document.querySelectorAll("details[data-k][open]")].map(x=>x.dataset.k));
+  const d = today();
+  renderToday(d); renderPlan(d); renderCare(d); renderStart(); renderMoney(d); renderJerry(d);
+  open.forEach(k => document.querySelectorAll('details[data-k="'+k+'"]').forEach(x=>{ x.open=true; }));
+  resolveNames();
+}
+function renderBanner(){
+  const el = document.getElementById("banner"); let h = "";
+  if(mode==="api"){
+    if(!famKey || keyBad){
+      h = '<div class="card" style="margin-bottom:12px;background:var(--ginger-soft)"><h3>'+(keyBad?"Ключ не подходит":"Нужна семейная ссылка")+'</h3><p class="small">Откройте приложение по ссылке, которую вам прислали, или вставьте её сюда. Это нужно один раз.</p>'+
+          '<form class="inline" id="key-form" autocomplete="off"><div class="field" style="flex-basis:220px"><label for="kk">Семейная ссылка</label><input id="kk" type="text" required placeholder="https://…#k=…"></div><button class="btn" type="submit">Сохранить</button></form></div>';
+    } else if(!myName){
+      h = '<div class="card" style="margin-bottom:12px;background:var(--ginger-soft)"><h3>Кто отмечает с этого телефона?</h3><p class="small">Выберите один раз — телефон запомнит, и рядом с отметками будет видно, кто покормил.</p>'+
+          '<div class="actions"><button class="btn" data-act="name" data-id="Адам">Адам</button><button class="btn" data-act="name" data-id="Валерия">Валерия</button><button class="btn ghost" data-act="nameother">Другое имя</button></div>'+
+          '<form class="inline" id="name-form" hidden autocomplete="off"><div class="field"><label for="nm">Имя</label><input id="nm" type="text" maxlength="24" required></div><button class="btn" type="submit">Сохранить</button></form></div>';
+    } else {
+      h = '<div class="actions small" style="justify-content:space-between;margin:0 2px 10px"><span class="muted">Вы — <b style="color:var(--ink)">'+esc(myName)+'</b> · <button class="btn link sm" data-act="namereset">сменить</button></span><button class="btn ghost sm" data-act="tab" data-id="history">История</button></div>';
+    }
+    if(loadErr && famKey && !keyBad) h += '<div class="banner" style="margin-bottom:12px">Нет связи с таблицей — показываю последние сохранённые данные. Проверьте интернет.</div>';
+  }
+  else if(mode==="local" && standalone) h = '<div class="banner" style="margin-bottom:12px">Отметки и вес сохраняются только на этом устройстве — у каждого из вас будут свои.</div>';
+  else if(mode==="local") h = '<div class="banner" style="margin-bottom:12px">Общие отметки сейчас недоступны — всё, что вы отмечаете, сохраняется только на этом устройстве.</div>';
+  else if(mode==="db" && !canWrite) h = '<div class="banner" style="margin-bottom:12px">Сейчас только просмотр. Чтобы отмечать кормления, владелец приложения должен открыть вам доступ «Редактор».</div>';
+  if(mode==="db" || (mode==="local")) h += '<div class="actions" style="justify-content:flex-end;margin:0 2px 10px"><button class="btn ghost sm" data-act="tab" data-id="history">История</button></div>';
+  el.innerHTML = h;
+}
+
+function renderToday(d){
+  const lw = latestWeight(d); const r = ration(d, lw.g, S.profile); const st = weightStatus(); const dt = P(d);
+  const to3 = diff(d,"2026-10-30");
+  document.getElementById("hero").innerHTML =
+    '<div class="hero"><div class="hero-mark" aria-hidden="true">'+catSvg()+'</div><div class="meta"><h1>Джери</h1>'+
+    '<span class="small muted">Скоттиш-фолд · рыжий тигровый · родился 30 июля 2026</span></div></div>'+
+    '<div class="hero-stats">'+
+      '<div class="stat"><b>'+ageText(d)+'</b><span>'+(to3>0? "3 месяца — 30 октября" : STAGE_NAME(d))+'</span></div>'+
+      '<div class="stat"><b class="num">'+lw.g.toLocaleString("ru-RU")+' г</b><span>вес на '+fS(lw.d)+'</span></div>'+
+      '<div class="stat"><b class="num">'+r.kcal+' ккал</b><span>нужно в день</span></div>'+
+    '</div><div><span class="pill '+st.cls+'">'+esc(st.text)+'</span></div>';
+
+  document.getElementById("today-date").textContent = WD[dt.getDay()]+", "+fD(d);
+  const nDry = MEALS[stageOf(d)].filter(m=>m[1]==="dry").length;
+  let rh = '<div class="eyebrow">Всего за день</div>'+
+    '<div class="ration"><div class="part"><div class="big">'+POUCH_G+' г</div><div class="lbl">влажного — это 1 пакетик, делим на 2 кормления</div></div><div class="plus">+</div>'+
+    '<div class="part"><div class="big">'+r.dry+' г</div><div class="lbl">сухого — делим на '+nDry+' кормления</div></div></div>';
+  if(r.tr){
+    rh += '<div class="note small"><b>Переход на новый корм, день '+r.tr.day+' из 10.</b> Сухой: '+r.oldG+' г старого («'+esc(FOODS[r.tr.from].dryShort)+'») + '+r.newG+' г нового («'+esc(FOODS[r.tr.to].dryShort)+'»), перемешать. Влажный: '+(r.tr.wetNew?'уже новые пакетики.':'пока старые пакетики, с 6-го дня — новые.')+'</div>';
+  } else {
+    rh += '<p class="small muted">Корм сейчас: сухой — '+esc(FOODS[r.fk].dry)+'; влажный — '+esc(FOODS[r.fk].wet)+'.</p>';
+    const nextSwitch = [Y1,Y7].find(x => x > d && diff(d,x) <= 21);
+    if(nextSwitch){ const nf = FOODS[foodKey(nextSwitch)]; rh += '<div class="note small"><b>Через '+diff(d,nextSwitch)+' '+plural(diff(d,nextSwitch),["день","дня","дней"])+' — новый корм.</b> Купите заранее: '+esc(nf.dry)+' и '+esc(nf.wet)+'. Переход приложение распишет по дням само.</div>'; }
+  }
+  if(r.neut && d<Y1) rh += '<p class="small muted">После кастрации порция меньше на 15%.</p>';
+  if(r.bcs==="thin") rh += '<p class="small muted">Фигура «худой» — порция больше на 10%.</p>';
+  if(r.bcs==="full") rh += '<p class="small muted">Фигура «полный» — порция меньше.</p>';
+  document.getElementById("ration").innerHTML = rh;
+
+  const meals = mealsFor(d, r); const done = S.day.m || {};
+  const now = new Date(); const nowMin = now.getHours()*60+now.getMinutes(); let nextKey = null;
+  for(const m of meals){ const mm = parseInt(m.key.slice(0,2),10)*60+parseInt(m.key.slice(2),10); if(!done[m.key] && mm >= nowMin-45){ nextKey = m.key; break; } }
+  document.getElementById("meals").innerHTML = meals.map(m => {
+    const on = !!done[m.key]; const isNow = m.key===nextKey;
+    return '<div class="row'+(on?" is-done":"")+(isNow?" is-now":"")+'"><div class="t">'+m.t+'</div><div class="what"><b>'+esc(m.label)+'</b>'+(isNow?' <span class="pill now">следующее</span>':'')+
+      '<div class="sub">'+esc(m.sub)+'</div>'+(on?'<div class="who">'+esc(whoLabel(done[m.key]))+'</div>':'')+'</div>'+
+      '<button class="check'+(on?" on":"")+'" data-act="meal" data-id="'+m.key+'" aria-pressed="'+on+'" aria-label="'+(on?"Снять отметку":"Покормили")+' '+m.t+'">✓</button></div>';
+  }).join("");
+
+  const dd = S.day.d || {};
+  document.getElementById("daily").innerHTML = DAILY.map(([k,t,s]) => { const on = !!dd[k];
+    return '<div class="row wide'+(on?" is-done":"")+'"><div class="what"><b style="font-family:var(--f-body);font-weight:600;font-size:15px">'+esc(t)+'</b><div class="sub">'+esc(s)+'</div>'+(on?'<div class="who">'+esc(whoLabel(dd[k]))+'</div>':'')+'</div>'+
+      '<button class="check'+(on?" on":"")+'" data-act="daily" data-id="'+k+'" aria-pressed="'+on+'" aria-label="'+esc(t)+'">✓</button></div>'; }).join("");
+
+  const due = [];
+  for(const e of PLAN){ const s = evState(e,d); if(e.info) continue; if(s==="now" || (s==="late" && diff(e.to||e.from, d) <= 45)) due.push(evCard(e,d,true)); }
+  for(const t of CARE_FLAT){ if(careNext(t,d)<=d) due.push(taskCard(t,d,true)); }
+  document.getElementById("due").innerHTML = due.length ? due.join("") : '<div class="card"><p class="muted">На сегодня по уходу ничего. Отдыхайте и играйте.</p></div>';
+
+  document.getElementById("tips").innerHTML = tipsFor(d).map(t => '<div class="card"><p class="small">'+esc(t)+'</p></div>').join("");
+
+  const ws = allWeights(); const lastW = ws[ws.length-1]; const nextW = addDays(lastW.d, d<Y1?7:30);
+  document.getElementById("weight-info").innerHTML = (nextW<=d
+      ? '<p><span class="pill now">Пора взвесить</span> Последний раз — '+fD(lastW.d)+', '+lastW.g+' г.</p>'
+      : '<p>Последний вес — <b class="num">'+lastW.g+' г</b> ('+fD(lastW.d)+'). Следующее взвешивание — '+WD[P(nextW).getDay()]+', '+fD(nextW)+'.</p>');
+
+  const rec = (S.recent||[]).slice(0,5);
+  document.getElementById("recent").innerHTML = rec.length ? rec.map(histRow).join("") : '<div class="money-row"><div class="small muted">Здесь появятся последние отметки — ваши и Валерии.</div></div>';
+  const nv = PLAN.find(e => e.vet && ["late","now","future"].includes(evState(e,d)) && diff(e.to||e.from, d) <= 45);
+  document.getElementById("next-vet").innerHTML = nv ? evCard(nv,d,false) : '<div class="card"><p class="muted">Ближайших визитов нет.</p></div>';
+}
+
+function evCard(e,d,compact){
+  const s = evState(e,d); const dn = planDone(e.id);
+  const cls = s==="done"||s==="past" ? "done" : s==="now" ? "now" : s==="late" ? "late" : "";
+  const dl = diff(d,e.from);
+  const pill = e.passport ? '<span class="pill ok">в паспорте</span>' : s==="done" ? '<span class="pill ok">сделано</span>' : s==="now" ? '<span class="pill now">сейчас</span>' : s==="late" ? '<span class="pill warn">пора сделать</span>' : (e.info? "" : '<span class="pill soft">через '+dl+' '+plural(dl,["день","дня","дней"])+'</span>');
+  const tag = e.groom ? '<span class="pill soft">груминг</span>' : "";
+  let h = '<article class="ev '+cls+'"><div class="ev-date">'+fRangeS(e.from,e.to)+(P(e.from).getFullYear()!==P(d).getFullYear()?'<div class="small muted">'+P(e.from).getFullYear()+'</div>':'')+'</div><div class="ev-body">';
+  h += '<div class="task-head"><h3>'+esc(e.title)+'</h3><span class="actions" style="gap:4px">'+tag+pill+'</span></div>';
+  if(e.body) h += '<ul class="plain small">'+e.body.map(b=>'<li>'+esc(b)+'</li>').join("")+'</ul>';
+  if(e.where) h += '<p class="kv"><b>Где:</b> '+esc(e.where)+'</p>';
+  if(e.cost) h += '<p class="kv"><b>Сколько:</b> '+esc(e.cost)+'</p>';
+  if(e.questions && !compact) h += '<details data-k="q-'+e.id+'"><summary class="small">Что спросить у врача</summary><div class="inner"><ol class="plain small">'+e.questions.map(q=>'<li>'+esc(q)+'</li>').join("")+'</ol></div></details>';
+  if(e.note && !compact) h += '<p class="note">'+esc(e.note)+'</p>';
+  if(!e.info && !e.passport){
+    if(dn) h += '<div class="actions"><span class="who">'+esc(whoLabel(dn).replace("✓ ","✓ "+fS(ymd(new Date(dn.at)))+", "))+'</span><button class="btn link sm" data-act="plan" data-id="'+e.id+'">отменить</button></div>';
+    else h += '<div class="actions"><button class="btn sm" data-act="plan" data-id="'+e.id+'">Сделано</button>'+(compact?'<button class="btn ghost sm" data-act="tab" data-id="plan">Весь план</button>':'')+'</div>';
+  }
+  return h + '</div></article>';
+}
+
+function taskCard(t,d,compact){
+  const last = careLast(t.id); const nx = careNext(t,d); const late = nx<=d;
+  const who = last && last.by ? byName(last.by) : "";
+  const lastTxt = last ? "последний раз — "+fD(last.d)+(who?" ("+who+")":"") : "ещё не делали";
+  let h = '<div class="'+(compact?"card":"task")+'"><div class="task-head"><h3>'+esc(t.title)+'</h3>'+(late?'<span class="pill now">сегодня</span>':'<span class="pill soft">'+fS(nx)+'</span>')+'</div>';
+  h += '<ul class="plain small">'+t.how.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
+  h += '<p class="small muted">'+esc(lastTxt)+'</p>';
+  const doneToday = last && last.d===d;
+  if(t.auto) h += '<div class="actions"><button class="btn ghost sm" data-act="focusweight">Записать вес</button></div>';
+  else if(t.bcs){
+    const cur = S.profile.bcs || "ideal";
+    h += '<div class="actions">'+[["thin","Худой","рёбра торчат"],["ideal","Как надо","рёбра прощупываются, есть талия"],["full","Полный","рёбра не прощупать, живот висит"]]
+      .map(([k,l,s]) => '<button class="btn '+(doneToday && cur===k?"":"ghost")+' sm" data-act="bcs" data-id="'+k+'" title="'+esc(s)+'">'+l+'</button>').join("")+'</div>'+
+      '<p class="small muted">Худой — рёбра и позвоночник торчат. Как надо — рёбра легко прощупываются, сверху видна талия. Полный — рёбра не прощупать, талии нет.</p>';
+  }
+  else h += '<div class="actions">'+(doneToday ? '<span class="who">✓ сделано сегодня</span><button class="btn link sm" data-act="careundo" data-id="'+t.id+'">отменить</button>' : '<button class="btn sm" data-act="care" data-id="'+t.id+'">Сделано</button>')+'</div>';
+  return h+'</div>';
+}
+
+function renderPlan(d){
+  const lo = addDays(d,-21), hi = addDays(d,400);
+  const upcoming = PLAN.filter(e => (e.to||e.from) >= lo && e.from <= hi);
+  const past = PLAN.filter(e => (e.to||e.from) < lo);
+  const group = list => { let h="", cur=""; for(const e of list){ const m=e.from.slice(0,7); if(m!==cur){ cur=m; const dt=P(e.from); h+='<div class="month">'+MN[dt.getMonth()]+' '+dt.getFullYear()+'</div>'; } h+=evCard(e,d,false); } return h; };
+  document.getElementById("plan").innerHTML = group(upcoming) + '<p class="small muted" style="margin:14px 2px 0">Дальше план продолжается сам: глистогонка раз в 3 месяца, груминг весной и осенью, врач раз в год, с 11 лет — раз в полгода.</p>';
+  document.getElementById("plan-past").innerHTML = past.length ? group(past.slice().reverse()) : '<p class="small muted">Пока пусто.</p>';
+  document.getElementById("places").innerHTML = PLACES.map((p,i) =>
+    '<div class="place"><div class="place-top"><h3>'+esc(p.name)+'</h3><span class="pill '+(i===0?"now":"soft")+'">'+esc(p.tag)+'</span></div>'+
+    '<p class="small">'+esc(p.addr)+' · '+esc(p.dist)+'</p><p class="small muted">'+esc(p.hours)+'</p>'+
+    '<div class="phone"><code>'+esc(p.phone)+'</code><button class="btn ghost sm" data-act="copy" data-id="'+esc(p.phone)+'">Скопировать</button></div>'+
+    (p.note?'<p class="small">'+esc(p.note)+'</p>':'')+
+    '<div class="actions small"><a href="https://yandex.ru/maps/?text='+encodeURIComponent("Москва, "+p.addr)+'" target="_blank" rel="noopener">Маршрут в Яндекс Картах</a><a href="'+p.site+'" target="_blank" rel="noopener">'+esc(p.siteL)+'</a></div></div>').join("");
+}
+
+function renderCare(d){
+  document.getElementById("care").innerHTML = CARE.map(g => '<div class="section"><h2>'+esc(g.g)+'</h2><div class="list">'+g.items.map(t=>taskCard(t,d,false)).join("")+'</div></div>').join("") +
+    '<div class="section"><h2>Груминг у мастера</h2><div class="card small"><ul class="plain">'+
+    '<li>Весной и осенью — экспресс-линька: вычёсывают подшёрсток, шерсти дома и в желудке становится меньше. Даты уже в плане.</li>'+
+    '<li>Купать короткошёрстного кота не нужно — только если сильно испачкался, шампунем для кошек.</li>'+
+    '<li>Стрижка «под льва» короткошёрстным не нужна.</li>'+
+    '<li>Рядом: «Кус хвост» (Михалковская 48к1, груминг 4 900 ₽, когти 800 ₽) и «Четыре Лапы» (Михалковская 4А, экспресс-линька 3 500 ₽).</li></ul></div></div>';
+}
+
+function renderStart(){
+  const done = S.start.done || {}; let total=0, n=0;
+  document.getElementById("start").innerHTML = START.map(g => '<div class="list" style="margin-top:8px"><div class="row wide" style="padding-block:10px"><div class="eyebrow">'+esc(g.g)+'</div></div>'+g.items.map(([k,t,s]) => { total++; const on=!!done[k]; if(on) n++;
+    return '<div class="row wide'+(on?" is-done":"")+'"><div class="what"><b style="font-family:var(--f-body);font-weight:600;font-size:14.5px">'+esc(t)+'</b>'+(s?'<div class="sub">'+esc(s)+'</div>':'')+'</div><button class="check'+(on?" on":"")+'" data-act="start" data-id="'+k+'" aria-pressed="'+on+'" aria-label="'+esc(t)+'">✓</button></div>'; }).join("")+'</div>').join("");
+  document.getElementById("start-count").textContent = n+" из "+total;
+}
+
+function monthCost(r){ const wet = 30.4*PRICE.pouch, dry = r.dry*30.4/3000*PRICE.dry3kg; return {wet, dry, total: wet+dry+PRICE.litter+PRICE.misc}; }
+function renderMoney(d){
+  const lw = latestWeight(d); const r = ration(d, lw.g, S.profile); const mc = monthCost(r);
+  const rnd = n => Math.round(n/100)*100;
+  const yearFood = 12*(mc.wet + 45*30.4/3000*PRICE.dry3kg + PRICE.litter + PRICE.misc);
+  const vet = 4000+6000+9000+4000+1800, groom1 = 800+3500, once = 9000;
+  const adultR = ration("2028-01-15", 4500, {neutered:true}); const amc = monthCost(adultR);
+  const adultYear = 12*amc.total + 4000 + 4*600 + 2*4200;
+  const row = (a,b,s) => '<div class="money-row"><div>'+a+(s?'<div class="small muted">'+s+'</div>':'')+'</div><div class="sum">'+b+'</div></div>';
+  document.getElementById("money").innerHTML =
+    '<div class="card"><div class="eyebrow">Каждый месяц сейчас</div><div class="money-total">≈ '+rub(rnd(mc.total))+'</div><p class="small muted">Считается само по текущей порции. Цены октября 2026.</p></div>'+
+    '<div class="list" style="margin-top:8px">'+
+      row("Влажный корм", rub(rnd(mc.wet)), "1 пакетик в день по 94 ₽ (упаковка 26 пакетиков за 2 444 ₽ на shop.purina.ru)")+
+      row("Сухой корм", rub(rnd(mc.dry)), r.dry+" г в день, мешок 3 кг за 3 726 ₽ — хватит примерно на "+Math.max(1,Math.round(3000/Math.max(r.dry,1)/30.4))+" мес.")+
+      row("Наполнитель", "≈ "+rub(PRICE.litter), "примерно мешок 10 кг в месяц")+
+      row("Мелочи", "≈ "+rub(PRICE.misc), "ватные диски, игрушки, трава, пелёнки")+
+    '</div>'+
+    '<div class="section"><h2>Первый год</h2><div class="list">'+
+      row("Еда, наполнитель, мелочи", "≈ "+rub(rnd(yearFood)))+
+      row("Врач по плану", "≈ "+rub(vet), "прививки, анализы и УЗИ сердца, кастрация с чипом, глистогонки")+
+      row("Груминг", "≈ "+rub(groom1), "когтикюр в ноябре, экспресс-линька в апреле")+
+      row("Разовые покупки", "≈ "+rub(once), "лоток, миски, когтеточка, лежанка, весы — список в «Уход»")+
+      row("<b>Всего</b>", "<b>≈ "+rub(rnd(yearFood+vet+groom1+once))+"</b>", "в среднем ≈ "+rub(rnd((yearFood+vet+groom1+once)/12))+" в месяц")+
+    '</div></div>'+
+    '<div class="section"><h2>Каждый следующий год</h2><div class="list">'+
+      row("Еда и наполнитель", "≈ "+rub(rnd(12*amc.total)), "кот около 4,5 кг: "+adultR.dry+" г сухого и 1 пакетик в день")+
+      row("Врач раз в год + глистогонки", "≈ "+rub(6400), "с 7 лет добавятся анализы, ≈ 3 000 ₽")+
+      row("Груминг весной и осенью", "≈ "+rub(8400))+
+      row("<b>Всего за год</b>", "<b>≈ "+rub(rnd(adultYear))+"</b>", "≈ "+rub(rnd(adultYear/12))+" в месяц")+
+    '</div><div class="card" style="margin-top:8px"><p><b>Отложите 15 000 ₽ отдельно</b> на непредвиденное: ночной приём, анализы, если заболеет. Это не трата, а подушка.</p></div></div>'+
+    '<div class="section"><h2>Как сэкономить</h2><div class="card small"><ul class="plain">'+
+      '<li>Влажный корм брать упаковкой по 26 пакетиков на shop.purina.ru — 94 ₽ за штуку против 113 ₽ в магазине, экономия ≈ 570 ₽ в месяц.</li>'+
+      '<li>Прививку от бешенства можно сделать бесплатно в госклинике на 2-м Лихачёвском, 6 (с 3 месяцев).</li>'+
+      '<li>Чип — во время кастрации, без отдельного визита и стресса.</li>'+
+      '<li>Когти и вычёсывание дома — бесплатно; к грумеру только на линьку.</li>'+
+    '</ul></div></div>';
+
+  const mk = d.slice(0,7); const monthExp = S.expenses.filter(x => (x.d||"").slice(0,7)===mk);
+  const sum = monthExp.reduce((a,x)=>a+(Number(x.sum)||0),0); const all = S.expenses.reduce((a,x)=>a+(Number(x.sum)||0),0);
+  document.getElementById("exp-sum").innerHTML = '<p class="small">За '+MN[P(d).getMonth()].toLowerCase()+': <b class="num">'+rub(sum)+'</b> · всего записано: <b class="num">'+rub(all)+'</b></p>';
+  document.getElementById("exp-list").innerHTML = S.expenses.length ? S.expenses.slice(0,60).map(x => { const w = byName(x.by);
+    return '<div class="money-row"><div>'+esc(x.what||"")+'<div class="small muted">'+fD(x.d)+(w?" · "+esc(w):"")+'</div></div><div class="actions"><span class="sum">'+rub(Number(x.sum)||0)+'</span><button class="btn link sm" data-act="editexp" data-id="'+esc(x.id)+'">изменить</button><button class="btn link sm" data-act="delexp" data-id="'+esc(x.id)+'" aria-label="Удалить">удалить</button></div></div>'; }).join("")
+    : '<div class="money-row"><div class="muted small">Пока пусто. Запишите первую покупку — например, корм или наполнитель.</div></div>';
+}
+
+function renderJerry(d){
+  document.getElementById("passport").innerHTML =
+    '<h2>Ветпаспорт</h2><div class="list" style="background:var(--surface-2)">'+
+    [["Порода","Скоттиш-фолд (шотландская вислоухая)"],["Пол","кот"],["Окрас","рыжий тигровый, короткошёрстный"],["Родился","30 июля 2026"],["Глистогонка","17 сентября 2026 (стр. 12)"],["Прививка","27 сентября 2026, «Мультифел», серия 40 (стр. 14)"],["Бешенство", planDone("p_vac2")?"сделано, отметка в плане":"ещё нет — в плане на 21–25 октября"],["Чип", S.profile.neutered?"смотрите отметку «Кастрация + чип»":"нет — в плане на февраль"]]
+      .map(([a,b])=>'<div class="money-row"><div class="muted small">'+a+'</div><div class="small" style="text-align:right">'+esc(b)+'</div></div>').join("")+'</div>';
+
+  const ws = allWeights(); const st = weightStatus();
+  const lastDay = diff(DOB, ws[ws.length-1].d);
+  const kitten = lastDay < 365;
+  const x0 = kitten ? BASE_DAY : Math.max(BASE_DAY, lastDay-540);
+  const x1 = kitten ? Math.max(lastDay+35, BASE_DAY+112) : lastDay+30;
+  const inView = ws.filter(w => diff(DOB,w.d) >= x0);
+  const maxG = Math.max(...inView.map(w=>w.g), kitten ? corridor(Math.min(x1,365)).hi : 0);
+  const minG = kitten ? 500 : Math.min(...inView.map(w=>w.g));
+  const yMin = Math.floor((minG - (kitten?0:300))/500)*500, yMax = Math.ceil((maxG+(kitten?0:300))/500)*500;
+  const W=330,H=180,L=40,R=18,T=10,B=26;
+  const sx = x => L+(x-x0)/(x1-x0)*(W-L-R), sy = y => T+(1-(y-yMin)/Math.max(1,(yMax-yMin)))*(H-T-B);
+  let band="", mid=[];
+  if(kitten){ const top=[], bot=[]; for(let x=x0;x<=Math.min(x1,365);x+=3){ const c=corridor(x); top.push(sx(x).toFixed(1)+","+sy(c.hi).toFixed(1)); bot.unshift(sx(x).toFixed(1)+","+sy(c.lo).toFixed(1)); mid.push(sx(x).toFixed(1)+","+sy(c.mid).toFixed(1)); } band = '<polygon class="band" points="'+top.concat(bot).join(" ")+'"/>'; }
+  let grid=""; for(let y=yMin;y<=yMax;y+=500){ grid += '<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+sy(y)+'" y2="'+sy(y)+'"/><text x="'+(L-6)+'" y="'+(sy(y)+4)+'" text-anchor="end">'+(y/1000).toLocaleString("ru-RU")+' кг</text>'; }
+  let xl=""; const marks=[];
+  if(kitten) marks.push(["2026-10-30","3 мес"],["2026-11-30","4 мес"],["2026-12-30","5 мес"],["2027-01-30","6 мес"],["2027-03-30","8 мес"],["2027-05-30","10 мес"],["2027-07-30","1 год"]);
+  else { const step = Math.ceil((x1-x0)/30/5); for(let m=0;m<=240;m+=step){ const a=P(DOB); const dd=ymd(new Date(a.getFullYear(), a.getMonth()+m, 1)); const x=diff(DOB,dd); if(x>=x0 && x<=x1) marks.push([dd, MS[P(dd).getMonth()]+" "+String(P(dd).getFullYear()).slice(2)]); } }
+  for(const [dd,l] of marks){ const x=diff(DOB,dd); if(x>=x0 && x<=x1) xl += '<line class="grid" x1="'+sx(x)+'" x2="'+sx(x)+'" y1="'+T+'" y2="'+(H-B)+'" opacity=".5"/><text x="'+sx(x)+'" y="'+(H-8)+'" text-anchor="middle">'+l+'</text>'; }
+  const pts = inView.map(w=>[sx(diff(DOB,w.d)), sy(w.g)]);
+  const line = pts.length>1 ? '<polyline class="line" points="'+pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")+'"/>' : "";
+  const dots = pts.map(p=>'<circle class="pt" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4.5"/>').join("");
+  const kg = g => (Math.round(g/100)/10).toLocaleString("ru-RU");
+  const c3 = corridor(diff(DOB,"2026-10-30")), c6 = corridor(diff(DOB,"2027-01-30")), c12 = corridor(diff(DOB,"2027-07-30"));
+  const bcsTxt = {thin:"худой", ideal:"как надо", full:"полный"}[S.profile.bcs||"ideal"];
+  const bcsLast = careLast("bcs");
+  document.getElementById("growth").innerHTML =
+    '<div class="task-head"><p class="small">Сейчас <b class="num">'+ws[ws.length-1].g+' г</b>'+(st.delta!=null?' · '+(st.delta>=0?"+":"")+st.delta+' г в неделю':'')+'</p><span class="pill '+st.cls+'">'+esc(st.text)+'</span></div>'+
+    '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="График веса Джери">'+band+grid+xl+(mid.length?'<polyline class="mid" points="'+mid.join(" ")+'"/>':'')+line+dots+'</svg>'+
+    (kitten ? '<p class="small muted">Оранжевая полоса — ориентир для Джери от его 750 г: около 100 г в неделю до 5 месяцев, потом медленнее. Точки — ваши взвешивания.</p>'+
+      '<div class="list" style="background:var(--surface-2)">'+
+      '<div class="money-row"><div class="small">3 месяца, 30 октября</div><div class="sum small">'+kg(c3.lo)+'–'+kg(c3.hi)+' кг</div></div>'+
+      '<div class="money-row"><div class="small">6 месяцев, 30 января</div><div class="sum small">'+kg(c6.lo)+'–'+kg(c6.hi)+' кг</div></div>'+
+      '<div class="money-row"><div class="small">1 год, 30 июля</div><div class="sum small">'+kg(c12.lo)+'–'+kg(c12.hi)+' кг</div></div>'+
+      '<div class="money-row"><div class="small">Взрослый кот, к 1,5–2 годам</div><div class="sum small">4–6 кг</div></div></div>'+
+      '<p class="small">750 г в 10 недель — немного легче, чем у среднего котёнка этого возраста. Не тревожно, если он активный и хорошо ест, но на приёме 21–25 октября попросите врача оценить.</p>'
+      : '<p class="small muted">Точки — ваши взвешивания за последние полтора года. Норма для взрослого кота — вес почти не меняется.</p>')+
+    '<p class="small">Фигура: <b>'+bcsTxt+'</b>'+(bcsLast?' (оценили '+fD(bcsLast.d)+')':' — оценка раз в месяц во вкладке «Уход»')+'.</p>';
+
+  document.getElementById("w-list").innerHTML = ws.slice().reverse().slice(0,40).map((w,i,arr) => { const prev = arr[i+1]; const dlt = prev ? w.g-prev.g : null; const who = byName(w.by);
+    return '<div class="money-row"><div>'+fDY(w.d)+(w.base?' <span class="small muted">· из переписки</span>':'')+(dlt!=null?'<div class="small muted">'+(dlt>=0?"+":"")+dlt+' г за '+diff(prev.d,w.d)+' '+plural(diff(prev.d,w.d),["день","дня","дней"])+(who?" · "+esc(who):"")+'</div>':'')+'</div><div class="actions"><span class="sum">'+w.g+' г</span>'+(!w.base?'<button class="btn link sm" data-act="delw" data-id="'+w.d+'">удалить</button>':'')+'</div></div>'; }).join("");
+
+  const stages = [
+    ["kitten","Котёнок","до 30 июля 2027", "Корм для котят. Кормлений 5, с 3 месяцев — 4. Взвешивать каждую неделю. Прививки, кастрация, чип."],
+    ["adult","Взрослый","1–7 лет, до 2033", "Pro Plan Sterilised. 4 кормления. Взвешивать раз в месяц. Врач раз в год, груминг весной и осенью, глистогонка раз в 3 месяца."],
+    ["mature","Зрелый","7–11 лет, 2033–2037", "Pro Plan Sterilised 7+. Каждый год анализы крови и мочи. Мягкая лежанка, ступенька на подоконник."],
+    ["senior","Пожилой","с 11 лет, с 2037", "Врач раз в полгода. С 12 лет порция больше на 20%. Низкий лоток, вода в нескольких местах, каждый день влажный корм."]
+  ];
+  const curStage = d<Y1?"kitten":d<Y7?"adult":d<Y11?"mature":"senior";
+  document.getElementById("stages").innerHTML = stages.map(([k,t,w,s]) => '<div class="task"><div class="task-head"><h3>'+t+'</h3>'+(k===curStage?'<span class="pill now">сейчас</span>':'<span class="pill soft">'+w+'</span>')+'</div><p class="small">'+esc(s)+'</p></div>').join("");
+
+  const nb = document.getElementById("neutered"); if(document.activeElement!==nb) nb.checked = !!S.profile.neutered;
+  const lw = latestWeight(d); const r = ration(d, lw.g, S.profile);
+  document.getElementById("calc-now").textContent = d<Y1
+    ? "Сейчас: "+ageText(d)+", "+lw.g+" г → "+r.kpk+" ккал на кг × "+(lw.g/1000).toLocaleString("ru-RU")+" кг"+(r.neut?" × 0,85":"")+(r.bcs!=="ideal"?" × поправка на фигуру":"")+" = "+r.kcal+" ккал. Минус пакетик влажного "+r.wetK+" ккал → "+r.dry+" г сухого"+(r.capped?" (ограничено таблицей Purina — "+r.cap+" г)":"")+"."
+    : "Сейчас: "+ageText(d)+", "+lw.g+" г → "+r.kcal+" ккал в день. Минус пакетик влажного "+r.wetK+" ккал → "+r.dry+" г сухого.";
+}
+
+const WHO_COLORS = ["#C2531A","#2F6FB2","#22744A","#8A4FB5","#B0832A"];
+function whoColor(n){ let h=0; for(const c of String(n||"")) h=(h*31+c.charCodeAt(0))>>>0; return WHO_COLORS[h%WHO_COLORS.length]; }
+function histWho(h){ return mode==="db" ? byName(h.who) : (h.who||""); }
+function histRow(h){
+  const w = histWho(h); const d = h.at ? new Date(h.at) : null;
+  const when = d ? (ymd(d)===today() ? hhmm(h.at) : fS(ymd(d))+", "+hhmm(h.at)) : "";
+  return '<div class="money-row" style="grid-template-columns:auto 1fr;gap:10px;align-items:start"><span class="pill" style="background:'+whoColor(w)+';color:#fff;min-width:28px;justify-content:center">'+esc((w||"?").slice(0,1).toUpperCase())+'</span><div><div class="small">'+esc(h.text||"")+'</div><div class="small muted">'+esc(when)+(w?" · "+esc(w):"")+'</div></div></div>';
+}
+let histFilter = "";
+function renderHistory(){
+  const el = document.getElementById("history"); if(!el) return;
+  const items = S.history || [];
+  const people = [...new Set(items.map(histWho).filter(Boolean))];
+  const chips = '<div class="actions" style="margin-bottom:8px"><button class="btn sm '+(histFilter===""?"":"ghost")+'" data-act="hfilter" data-id="">Все</button>'+people.map(p=>'<button class="btn sm '+(histFilter===p?"":"ghost")+'" data-act="hfilter" data-id="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div>';
+  const list = items.filter(h => !histFilter || histWho(h)===histFilter);
+  let body = "", cur = "";
+  for(const h of list){ const dk = h.at ? ymd(new Date(h.at)) : ""; if(dk!==cur){ cur=dk; body += '<div class="month">'+(dk===today()?"Сегодня":dk===addDays(today(),-1)?"Вчера":dk?fDY(dk):"")+'</div>'; } body += '<div class="list" style="margin-top:6px">'+histRow(h)+'</div>'; }
+  el.innerHTML = (people.length>1?chips:"") + (list.length ? body : (mode==="api" && !histLoaded ? '<p class="small muted">Загружаю…</p>' : '<p class="small muted">Пока пусто. Здесь будет видно, кто что отмечал, снимал, исправлял и удалял.</p>'));
+}
+
+function catSvg(){ return '<svg width="44" height="44" viewBox="0 0 48 48" fill="none" style="stroke:var(--ginger)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20c0-3 1-5 3-6.5 2-1.4 5-1 7-2.5M39 20c0-3-1-5-3-6.5-2-1.4-5-1-7-2.5"/><path d="M9 20c-2 4-1.5 9 1.5 13 3 3.8 8 6 13.5 6s10.5-2.2 13.5-6c3-4 3.5-9 1.5-13-1.5-3-3.5-5-15-5S10.5 17 9 20Z"/><path d="M17 26.5v1M31 26.5v1M22 32h4l-2 2Z"/><path d="M19 22c1.5-1 3-1.3 5-1.3s3.5.3 5 1.3" opacity=".55"/></svg>'; }
+
+/* ---------- Действия ---------- */
+function toast(t){ const el=document.getElementById("toast"); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>{el.hidden=true;},2600); }
+function setTab(id){
+  document.querySelectorAll("section[data-tab]").forEach(s => { s.hidden = s.dataset.tab!==id; });
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.id===id ? "true":"false"));
+  if(id!=="history") ls.set("jerry-tab", id); else loadHistory();
+  window.scrollTo(0,0);
+}
+function needName(){ if(mode==="api" && (!famKey || keyBad)){ toast("Сначала откройте семейную ссылку"); window.scrollTo(0,0); return true; } if(mode==="api" && !myName){ toast("Сначала выберите вверху, кто вы"); window.scrollTo(0,0); return true; } return false; }
+function blocked(){ if(!canWrite && mode==="db"){ toast("Нужен доступ «Редактор», чтобы отмечать."); return true; } return needName(); }
+function setName(n){ myName = n; ls.set("jerry-name", n); renderBanner(); render(); toast("Готово: вы — "+n+". Телефон запомнил"); }
+const mealTitle = key => { const r = ration(today(), latestWeight(today()).g, S.profile); const m = mealsFor(today(), r).find(x=>x.key===key); return m ? m.t+" — "+m.label : key.slice(0,2)+":"+key.slice(2); };
+const titleOf = id => { const e = PLAN.find(x=>x.id===id); return e ? e.title+" ("+fRangeS(e.from,e.to)+")" : id; };
+const startTitle = id => { for(const g of START) for(const it of g.items) if(it[0]===id) return it[1]; return id; };
+let editExpId = null;
+function resetExpForm(){ editExpId=null; document.getElementById("e-sum").value=""; document.getElementById("e-what").value=""; document.getElementById("e-d").value=today(); const btn=document.querySelector("#exp-form button[type=submit]"); btn.textContent="Добавить"; const c=document.getElementById("exp-cancel"); if(c) c.remove(); }
+
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-act]"); if(!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if(act==="tab"){ setTab(id); return; }
+  if(act==="hfilter"){ histFilter = id||""; renderHistory(); return; }
+  if(act==="name"){ setName(id); return; }
+  if(act==="nameother"){ const f=document.getElementById("name-form"); if(f){ f.hidden=false; document.getElementById("nm").focus(); } return; }
+  if(act==="namereset"){ myName=null; ls.del("jerry-name"); renderBanner(); return; }
+  if(act==="copy"){ try{ await navigator.clipboard.writeText(id); toast("Номер скопирован"); }catch(e){ const c=b.previousElementSibling; const r=document.createRange(); r.selectNodeContents(c); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Номер выделен — скопируйте"); } return; }
+  if(act==="focusweight"){ setTab("today"); setTimeout(()=>{ const i=document.getElementById("w-g"); i.scrollIntoView({block:"center"}); i.focus(); },60); return; }
+  if(act==="expcancel"){ resetExpForm(); return; }
+  if(blocked()) return;
+  if(act==="meal"){ const cur=(S.day.m||{})[id]; const log = cur ? "Снята отметка: кормление "+mealTitle(id) : "Покормили: "+mealTitle(id);
+    if(mode==="db"){ S.day = deepMerge(S.day,{m:{[id]:cur?null:mark()}}); render(); }
+    await merge("days/"+dayKey, {m:{[id]: cur?null:mark()}}, log); if(!cur) toast("Отмечено: покормили"); return; }
+  if(act==="daily"){ const cur=(S.day.d||{})[id]; const t=(DAILY.find(x=>x[0]===id)||[0,id])[1]; const log=(cur?"Снята отметка: ":"Отмечено: ")+t;
+    if(mode==="db"){ S.day = deepMerge(S.day,{d:{[id]:cur?null:mark()}}); render(); }
+    await merge("days/"+dayKey, {d:{[id]: cur?null:mark()}}, log); return; }
+  if(act==="plan"){ const cur=planDone(id); await merge("jerry/plan", {done:{[id]: cur?null:mark()}}, "План: «"+titleOf(id)+"» — "+(cur?"отметка снята":"сделано")); if(!cur) toast("Отмечено в плане"); return; }
+  if(act==="start"){ const cur=(S.start.done||{})[id]; await merge("jerry/start", {done:{[id]: cur?null:mark()}}, "Первая неделя: «"+startTitle(id)+"» — "+(cur?"отметка снята":"готово")); return; }
+  if(act==="care"){ const t=CARE_FLAT.find(x=>x.id===id); const prev=(S.care.last||{})[id]||null; const p = prev ? {d:prev.d, by:prev.by||null} : null;
+    await merge("jerry/care", {last:{[id]: {d:today(), by:meId(), prev:p}}}, "Уход: «"+t.title+"» — сделано"); toast("Записано. Следующий раз — "+fD(addDays(today(), everyOf(t,today())))); return; }
+  if(act==="careundo"){ const t=CARE_FLAT.find(x=>x.id===id); const cur=(S.care.last||{})[id]; const p = cur && cur.prev ? {d:cur.prev.d, by:cur.prev.by, prev:null} : null;
+    await merge("jerry/care", {last:{[id]: p}}, "Уход: «"+t.title+"» — отметка снята"); return; }
+  if(act==="bcs"){ const L={thin:"худой",ideal:"как надо",full:"полный"}; const prev=(S.care.last||{}).bcs||null; const p = prev && prev.d!==today() ? {d:prev.d, by:prev.by||null} : (prev && prev.prev) || null;
+    await merge("jerry/profile", {bcs:id}, "Фигура: "+L[id]+(S.profile.bcs && S.profile.bcs!==id ? " (было: "+L[S.profile.bcs]+")" : ""));
+    await merge("jerry/care", {last:{bcs:{d:today(), by:meId(), prev:p}}});
+    toast(id==="ideal"?"Отлично, порция без изменений":id==="thin"?"Порция больше на 10%":"Порция меньше — следим за фигурой"); return; }
+  if(act==="editexp"){ const x=S.expenses.find(e=>e.id===id); if(!x) return; editExpId=id; document.getElementById("e-sum").value=x.sum; document.getElementById("e-what").value=x.what||""; document.getElementById("e-d").value=x.d||today();
+    const btn=document.querySelector("#exp-form button[type=submit]"); btn.textContent="Сохранить изменения";
+    if(!document.getElementById("exp-cancel")){ const c=document.createElement("button"); c.type="button"; c.id="exp-cancel"; c.className="btn ghost"; c.dataset.act="expcancel"; c.textContent="Отмена"; btn.after(c); }
+    document.getElementById("e-sum").scrollIntoView({block:"center"}); document.getElementById("e-sum").focus(); return; }
+  if(act==="delexp"){ if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="точно удалить?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.confirm=""; b.textContent="удалить"; } },3000); return; }
+    const x=S.expenses.find(e=>e.id===id); await delExpense(id, "Трата удалена: "+(x?rub(x.sum)+" — "+x.what+" ("+fS(x.d)+")":"")); return; }
+  if(act==="delw"){ if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="точно удалить?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.confirm=""; b.textContent="удалить"; } },3000); return; }
+    const w=S.weights.find(x=>x.d===id); await setDoc("jerry/weights", {list: S.weights.filter(w=>w.d!==id)}, "Вес удалён: "+(w?w.g+" г":"")+" ("+fS(id)+")"); return; }
+});
+document.addEventListener("submit", ev => {
+  if(ev.target && ev.target.id==="name-form"){ ev.preventDefault(); const n=(document.getElementById("nm").value||"").trim().slice(0,24); if(n) setName(n); }
+  if(ev.target && ev.target.id==="key-form"){ ev.preventDefault(); const v=(document.getElementById("kk").value||"").trim(); const m=v.match(/k=([A-Za-z0-9_-]{6,64})/) || v.match(/^([A-Za-z0-9_-]{6,64})$/); if(!m){ toast("В ссылке нет ключа — проверьте, что скопировали её целиком"); return; } famKey=m[1]; ls.set("jerry-key", famKey); keyBad=false; renderBanner(); apiRefresh(); }
+});
+document.getElementById("weight-form").addEventListener("submit", async ev => {
+  ev.preventDefault(); if(blocked()) return;
+  const g = Math.round(Number(document.getElementById("w-g").value)); const d = document.getElementById("w-d").value || today();
+  if(!(g>=200 && g<=12000)){ toast("Введите вес в граммах, например 850"); return; }
+  const old = S.weights.find(w=>w.d===d);
+  const list = S.weights.filter(w=>w.d!==d).concat([{d, g, by:meId(), at:new Date().toISOString()}]).sort((a,b)=>a.d.localeCompare(b.d));
+  await setDoc("jerry/weights", {list}, old ? "Вес исправлен: "+old.g+" → "+g+" г ("+fS(d)+")" : "Вес записан: "+g+" г ("+fS(d)+")"); document.getElementById("w-g").value = "";
+  const r = ration(today(), latestWeight(today()).g, S.profile);
+  toast("Вес записан. Сухого теперь "+r.dry+" г в день");
+});
+document.getElementById("exp-form").addEventListener("submit", async ev => {
+  ev.preventDefault(); if(blocked()) return;
+  const sum = Math.round(Number(document.getElementById("e-sum").value)); const what = document.getElementById("e-what").value.trim().slice(0,80); const d = document.getElementById("e-d").value || today();
+  if(!(sum>0) || !what){ toast("Укажите сумму и на что"); return; }
+  if(editExpId){ const x=S.expenses.find(e=>e.id===editExpId); const id=editExpId;
+    await saveExpense(id, {d, sum, what, by:(x&&x.by)||meId(), at:(x&&x.at)||new Date().toISOString(), editedBy:meId()}, "Трата изменена: "+(x?rub(x.sum)+" — "+x.what:"")+" → "+rub(sum)+" — "+what);
+    resetExpForm(); toast("Изменения сохранены"); return; }
+  await saveExpense(newId(), {d, sum, what, by:meId(), at:new Date().toISOString()}, "Трата: "+rub(sum)+" — "+what+" ("+fS(d)+")");
+  resetExpForm(); toast("Трата записана");
+});
+document.getElementById("neutered").addEventListener("change", async ev => { if(blocked()){ ev.target.checked=!ev.target.checked; return; } await merge("jerry/profile", {neutered: ev.target.checked}, ev.target.checked ? "Отмечено: Джери кастрирован" : "Снята отметка «Джери кастрирован»"); });
+
+/* ---------- Старт ---------- */
+document.getElementById("w-d").value = today(); document.getElementById("e-d").value = today();
+let startTab = "today"; { const h=(location.hash||"").slice(1); const s=ls.get("jerry-tab"); const ok=["today","plan","care","money","jerry"]; startTab = ok.includes(h)? h : (ok.includes(s)? s : "today"); }
+setTab(startTab);
+setInterval(() => { const t = today(); if(t!==dayKey){ dayKey=t; S.day={}; if(mode==="db") subscribeDay(); else if(mode==="api") apiRefresh(); else applyDocs(); document.getElementById("w-d").value=t; document.getElementById("e-d").value=t; } render(); }, 60000);
+window.__jerry = {ration, mealsFor, spoonsDry, tipsFor, PLAN};
+init();
+})();
+</script>
+</body>
+</html>
